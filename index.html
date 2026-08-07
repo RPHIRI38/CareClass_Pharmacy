@@ -1,1013 +1,786 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pharmacy Management System</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Care Class Pharmacy Management System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN for Analytics Graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- JsBarcode CDN for Barcode Rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <style>
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .printable-area, .printable-area * {
+                visibility: visible;
+            }
+            .printable-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
 </head>
-<body class="bg-slate-100 font-sans text-slate-800">
+<body class="bg-slate-100 font-sans text-slate-800 antialiased min-h-screen">
 
-  <!-- Header with Currency Converter Controls -->
-  <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
-      <div class="flex items-center space-x-3">
-        <i class="fa-solid fa-pills text-2xl text-emerald-300"></i>
-        <h1 class="text-xl font-bold tracking-wide">Care Class Pharmacy POS & Inventory</h1>
-      </div>
-      
-      <!-- Currency Converter Bar -->
-      <div class="flex items-center space-x-3 bg-indigo-800/80 px-4 py-1.5 rounded-lg text-sm border border-indigo-500/30">
-        <div class="flex items-center gap-1.5">
-          <span class="text-xs text-indigo-200 font-semibold">Rate (1 $ = K):</span>
-          <input type="number" id="exchange-rate-input" value="28.50" step="0.1" onchange="updateExchangeRate()" 
-            class="w-20 px-2 py-0.5 text-slate-900 text-xs font-bold rounded border border-indigo-300 focus:outline-none focus:ring-1 focus:ring-emerald-400">
+    <!-- Navigation Header -->
+    <header class="bg-slate-900 text-white shadow-md no-print">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <h1 class="text-xl font-bold tracking-wide flex items-center gap-2">
+                <span class="bg-emerald-500 text-white px-2 py-1 rounded-lg text-lg">CareClass</span> 
+                Pharmacy Management
+            </h1>
+            <nav class="flex flex-wrap justify-center gap-1 bg-slate-800 p-1 rounded-lg">
+                <button onclick="switchTab('checkout')" id="tab-checkout" class="tab-btn px-3 py-2 text-sm font-medium rounded-md bg-emerald-600 text-white transition">POS Checkout</button>
+                <button onclick="switchTab('inventory')" id="tab-inventory" class="tab-btn px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:text-white transition">Inventory</button>
+                <button onclick="switchTab('daily-reports')" id="tab-daily-reports" class="tab-btn px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:text-white transition">Daily Reports</button>
+                <button onclick="switchTab('analytics')" id="tab-analytics" class="tab-btn px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:text-white transition">Performance & Analytics</button>
+            </nav>
         </div>
-        
-        <div class="h-4 w-px bg-indigo-500/50"></div>
+    </header>
 
-        <div class="flex items-center gap-1.5">
-          <span class="text-xs text-indigo-200 font-semibold">Display:</span>
-          <select id="currency-select" onchange="toggleCurrencyDisplay()" class="bg-indigo-900 text-emerald-300 text-xs font-bold py-1 px-2 rounded border border-indigo-500 focus:outline-none">
-            <option value="K">ZMW Kwacha (K)</option>
-            <option value="$">USD ($)</option>
-          </select>
-        </div>
-      </div>
-    </div>
-  </header>
+    <main class="max-w-7xl mx-auto px-4 py-6">
 
-  <!-- Main Container -->
-  <main class="max-w-7xl mx-auto px-4 py-6">
-    
-    <!-- Navigation Tabs -->
-    <div class="flex flex-wrap border-b border-slate-300 mb-6 bg-white rounded-t-lg shadow-sm">
-      <button onclick="switchTab('pos')" id="tab-pos" class="tab-btn px-6 py-3 font-semibold text-indigo-600 border-b-2 border-indigo-600 flex items-center gap-2">
-        <i class="fa-solid fa-barcode"></i> POS Dispensing
-      </button>
-      <button onclick="switchTab('inventory')" id="tab-inventory" class="tab-btn px-6 py-3 font-semibold text-slate-500 hover:text-indigo-600 flex items-center gap-2">
-        <i class="fa-solid fa-boxes-stacked"></i> Stock & Inventory
-      </button>
-      <button onclick="switchTab('reports')" id="tab-reports" class="tab-btn px-6 py-3 font-semibold text-slate-500 hover:text-indigo-600 flex items-center gap-2">
-        <i class="fa-solid fa-chart-line"></i> Daily Reports
-      </button>
-      <button onclick="switchTab('analytics')" id="tab-analytics" class="tab-btn px-6 py-3 font-semibold text-slate-500 hover:text-indigo-600 flex items-center gap-2">
-        <i class="fa-solid fa-chart-pie"></i> Product Performance & Analytics
-      </button>
-    </div>
-
-    <!-- TAB 1: POS DISPENSING -->
-    <section id="view-pos" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      
-      <!-- Cart & Dispensing Panel -->
-      <div class="lg:col-span-2 bg-white rounded-lg shadow-sm p-6 flex flex-col justify-between min-h-[500px]">
-        <div>
-          <!-- Manual Barcode Search / Scan Buffer -->
-          <div class="mb-6 flex gap-3">
-            <div class="relative flex-1">
-              <i class="fa-solid fa-barcode absolute left-3 top-3.5 text-slate-400"></i>
-              <input type="text" id="barcode-input" placeholder="Scan barcode or type & press Enter..." 
-                class="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-lg font-mono">
-            </div>
-            <button onclick="handleManualScan()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2">
-              <i class="fa-solid fa-plus"></i> Add
-            </button>
-          </div>
-
-          <!-- Active Cart Table -->
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-              <thead>
-                <tr class="border-b border-slate-200 text-slate-500 text-sm">
-                  <th class="pb-3">Medicine</th>
-                  <th class="pb-3">Barcode</th>
-                  <th class="pb-3">Price</th>
-                  <th class="pb-3 text-center">Qty</th>
-                  <th class="pb-3 text-right">Subtotal</th>
-                  <th class="pb-3 text-center">Action</th>
-                </tr>
-              </thead>
-              <tbody id="cart-rows" class="divide-y divide-slate-100 font-medium">
-                <!-- Cart items populate dynamically -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Embedded Payment Method Checkout Footer -->
-        <div class="border-t border-slate-200 pt-4 mt-6">
-          <div class="flex justify-between items-center mb-4">
-            <span class="text-slate-500 text-lg">Total Amount:</span>
-            <span id="cart-total" class="text-3xl font-bold text-indigo-700">K0.00</span>
-          </div>
-
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Select Payment Method to Checkout:</label>
-          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+        <!-- ================= SECTION 1: POS CHECKOUT ================= -->
+        <section id="section-checkout" class="tab-content grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <!-- Direct Embedded Button: Airtel -->
-            <button onclick="openCheckoutModal('airtel')" 
-              class="bg-red-600 hover:bg-red-700 text-white p-3 rounded-lg font-bold text-xs shadow transition flex flex-col items-center justify-center gap-1">
-              <i class="fa-solid fa-mobile-retro text-base"></i>
-              <span>Airtel Money</span>
-            </button>
+            <!-- Barcode Scanner & Dropdown Item Selector -->
+            <div class="lg:col-span-1 bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-5">
+                <h2 class="text-lg font-bold text-slate-900 border-b pb-2">Add Item to Cart</h2>
+                
+                <!-- Instant Barcode Scanner Field -->
+                <div class="bg-emerald-50 p-3.5 rounded-xl border border-emerald-200">
+                    <label class="block text-xs font-bold text-emerald-800 uppercase mb-1">⚡ Quick Scan Barcode</label>
+                    <input type="text" id="barcode-scan-input" placeholder="Scan or type barcode & press Enter..." onkeydown="handleBarcodeScan(event)" class="w-full border border-emerald-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 focus:outline-none bg-white">
+                    <p class="text-[11px] text-emerald-600 mt-1">Press Enter to instantly add 1 unit to cart.</p>
+                </div>
 
-            <!-- Direct Embedded Button: MTN MoMo -->
-            <button onclick="openCheckoutModal('mtn')" 
-              class="bg-amber-500 hover:bg-amber-600 text-slate-900 p-3 rounded-lg font-bold text-xs shadow transition flex flex-col items-center justify-center gap-1">
-              <i class="fa-solid fa-wallet text-base"></i>
-              <span>MTN MoMo</span>
-            </button>
+                <div class="relative flex py-1 items-center">
+                    <div class="flex-grow border-t border-slate-200"></div>
+                    <span class="flex-shrink mx-2 text-xs text-slate-400 uppercase font-semibold">or select manually</span>
+                    <div class="flex-grow border-t border-slate-200"></div>
+                </div>
 
-            <!-- Direct Embedded Button: Zamtel -->
-            <button onclick="openCheckoutModal('zamtel')" 
-              class="bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-lg font-bold text-xs shadow transition flex flex-col items-center justify-center gap-1">
-              <i class="fa-solid fa-money-bill-transfer text-base"></i>
-              <span>Zamtel Kwacha</span>
-            </button>
-
-            <!-- Direct Embedded Button: Card -->
-            <button onclick="openCheckoutModal('card')" 
-              class="bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-lg font-bold text-xs shadow transition flex flex-col items-center justify-center gap-1">
-              <i class="fa-solid fa-credit-card text-base"></i>
-              <span>Credit Card</span>
-            </button>
-
-            <!-- Direct Embedded Button: Cash -->
-            <button onclick="openCheckoutModal('cash')" 
-              class="bg-slate-800 hover:bg-slate-900 text-white p-3 rounded-lg font-bold text-xs shadow transition flex flex-col items-center justify-center gap-1 col-span-2 sm:col-span-1">
-              <i class="fa-solid fa-hand-holding-dollar text-base"></i>
-              <span>Cash Pay</span>
-            </button>
-
-          </div>
-        </div>
-      </div>
-
-      <!-- Quick Test Barcode Panel -->
-      <div class="bg-white rounded-lg shadow-sm p-6">
-        <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
-          <i class="fa-solid fa-vial-virus text-indigo-600"></i> Quick Inventory Test
-        </h2>
-        <p class="text-xs text-slate-500 mb-4">Click any drug below to simulate a hardware barcode scanner trigger:</p>
-        <div id="quick-scan-list" class="space-y-3">
-          <!-- Quick scan buttons render here -->
-        </div>
-      </div>
-    </section>
-
-    <!-- TAB 2: STOCK & INVENTORY LOADING -->
-    <section id="view-inventory" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div class="bg-white rounded-lg shadow-sm p-6">
-        <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-indigo-700">
-          <i class="fa-solid fa-box-archive"></i> Load Batch Stock
-        </h2>
-        <form id="add-stock-form" onsubmit="handleAddStock(event)" class="space-y-4">
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Barcode</label>
-            <input type="text" id="inv-barcode" required class="w-full border border-slate-300 p-2 rounded focus:ring-2 focus:ring-indigo-500 font-mono">
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Drug Brand Name</label>
-            <input type="text" id="inv-name" required class="w-full border border-slate-300 p-2 rounded focus:ring-2 focus:ring-indigo-500">
-          </div>
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Quantity</label>
-              <input type="number" id="inv-qty" required min="1" class="w-full border border-slate-300 p-2 rounded focus:ring-2 focus:ring-indigo-500">
+                <!-- Manual Selection Form -->
+                <form id="add-to-cart-form" onsubmit="addToCart(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Select Product</label>
+                        <select id="product-select" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" required>
+                            <!-- Options populated dynamically -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Quantity</label>
+                        <input type="number" id="product-qty" min="1" value="1" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" required>
+                    </div>
+                    <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2.5 rounded-lg transition text-sm">
+                        Add to Cart
+                    </button>
+                </form>
             </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1" id="price-input-label">Price (K)</label>
-              <input type="number" id="inv-price" step="0.01" required class="w-full border border-slate-300 p-2 rounded focus:ring-2 focus:ring-indigo-500">
+
+            <!-- Cart Table & Trigger Checkout -->
+            <div class="lg:col-span-2 bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-lg font-bold mb-4 text-slate-900 border-b pb-2">Current Cart</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 text-slate-600 uppercase text-xs">
+                                <tr>
+                                    <th class="py-3 px-3">Barcode</th>
+                                    <th class="py-3 px-3">Batch Code</th>
+                                    <th class="py-3 px-3">Product</th>
+                                    <th class="py-3 px-3 text-right">Price (ZMW)</th>
+                                    <th class="py-3 px-3 text-center">Qty</th>
+                                    <th class="py-3 px-3 text-right">Total (ZMW)</th>
+                                    <th class="py-3 px-3 text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cart-table-body" class="divide-y divide-slate-100">
+                                <!-- Dynamic Cart Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mt-6 border-t pt-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-slate-600 font-medium">Grand Total:</span>
+                        <span id="cart-grand-total" class="text-2xl font-black text-slate-900">ZMW 0.00</span>
+                    </div>
+
+                    <button onclick="openCheckoutModal()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg shadow-md hover:shadow-lg transition text-base tracking-wide">
+                        CHECKOUT
+                    </button>
+                </div>
             </div>
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Expiry Date</label>
-            <input type="date" id="inv-expiry" required class="w-full border border-slate-300 p-2 rounded focus:ring-2 focus:ring-indigo-500">
-          </div>
-          <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded shadow">
-            Save Batch to Inventory
-          </button>
-        </form>
-      </div>
+        </section>
 
-      <div class="lg:col-span-2 bg-white rounded-lg shadow-sm p-6">
-        <h2 class="text-lg font-bold mb-4">Current Master Inventory</h2>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="border-b border-slate-200 text-slate-500 text-xs uppercase">
-                <th class="pb-3">Barcode</th>
-                <th class="pb-3">Medicine</th>
-                <th class="pb-3">Stock</th>
-                <th class="pb-3">Price</th>
-                <th class="pb-3">Expiry</th>
-              </tr>
-            </thead>
-            <tbody id="inventory-rows" class="divide-y divide-slate-100 text-sm">
-              <!-- Rendered via JS -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- TAB 3: DAILY REPORTS -->
-    <section id="view-reports" class="hidden space-y-6">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div class="bg-white p-5 rounded-lg shadow-sm border-l-4 border-indigo-600">
-          <p class="text-xs text-slate-500 font-semibold uppercase">Total Revenue</p>
-          <h3 id="report-revenue" class="text-2xl font-bold text-slate-800 mt-1">K 0.00</h3>
-        </div>
-        <div class="bg-white p-5 rounded-lg shadow-sm border-l-4 border-emerald-500">
-          <p class="text-xs text-slate-500 font-semibold uppercase">Transactions</p>
-          <h3 id="report-txs" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
-        </div>
-        <div class="bg-white p-5 rounded-lg shadow-sm border-l-4 border-amber-500">
-          <p class="text-xs text-slate-500 font-semibold uppercase">Units Sold</p>
-          <h3 id="report-units" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
-        </div>
-        <div class="bg-white p-5 rounded-lg shadow-sm border-l-4 border-rose-500">
-          <p class="text-xs text-slate-500 font-semibold uppercase">Low Stock Alerts</p>
-          <h3 id="report-alerts" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
-        </div>
-      </div>
-
-      <!-- Audit Sales Log -->
-      <div class="bg-white rounded-lg shadow-sm p-6">
-        <h2 class="text-lg font-bold mb-4">Completed Sales Audit Log</h2>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="border-b border-slate-200 text-slate-500 text-xs uppercase">
-                <th class="pb-3">Time</th>
-                <th class="pb-3">Items Purchased</th>
-                <th class="pb-3">Payment Method</th>
-                <th class="pb-3 text-right">Total Amount</th>
-              </tr>
-            </thead>
-            <tbody id="reports-log-rows" class="divide-y divide-slate-100 text-sm">
-              <!-- Rendered via JS -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- TAB 4: PRODUCT PERFORMANCE ANALYTICS & DECISION DASHBOARD -->
-    <section id="view-analytics" class="hidden space-y-6">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div class="bg-white p-5 rounded-lg shadow-sm border-t-4 border-indigo-600">
-          <p class="text-xs text-slate-500 font-semibold uppercase">Top Revenue Driver</p>
-          <h3 id="kpi-top-revenue" class="text-lg font-bold text-slate-800 mt-1 truncate">None</h3>
-          <p id="kpi-top-revenue-val" class="text-xs text-indigo-600 font-semibold mt-1">K 0.00</p>
-        </div>
-        <div class="bg-white p-5 rounded-lg shadow-sm border-t-4 border-emerald-500">
-          <p class="text-xs text-slate-500 font-semibold uppercase">Highest Volume Leader</p>
-          <h3 id="kpi-top-units" class="text-lg font-bold text-slate-800 mt-1 truncate">None</h3>
-          <p id="kpi-top-units-val" class="text-xs text-emerald-600 font-semibold mt-1">0 units sold</p>
-        </div>
-        <div class="bg-white p-5 rounded-lg shadow-sm border-t-4 border-rose-500">
-          <p class="text-xs text-slate-500 font-semibold uppercase">Dead Stock Warning</p>
-          <h3 id="kpi-dead-stock" class="text-2xl font-bold text-rose-600 mt-1">0 Items</h3>
-          <p class="text-xs text-slate-400 mt-1">Zero sales recorded</p>
-        </div>
-        <div class="bg-white p-5 rounded-lg shadow-sm border-t-4 border-amber-500">
-          <p class="text-xs text-slate-500 font-semibold uppercase">Stock Reorder Priority</p>
-          <h3 id="kpi-reorder-count" class="text-2xl font-bold text-amber-600 mt-1">0 Items</h3>
-          <p class="text-xs text-slate-400 mt-1">High demand + Low stock</p>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white p-6 rounded-lg shadow-sm">
-          <h3 class="text-md font-bold mb-4 text-slate-700 flex items-center gap-2">
-            <i class="fa-solid fa-chart-column text-indigo-600"></i> Revenue Generated by Product
-          </h3>
-          <div class="h-64 relative">
-            <canvas id="chart-revenue"></canvas>
-          </div>
-        </div>
-
-        <div class="bg-white p-6 rounded-lg shadow-sm">
-          <h3 class="text-md font-bold mb-4 text-slate-700 flex items-center gap-2">
-            <i class="fa-solid fa-chart-bar text-emerald-600"></i> Units Sold vs. Remaining Stock
-          </h3>
-          <div class="h-64 relative">
-            <canvas id="chart-stock-vs-sales"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <div class="bg-white rounded-lg shadow-sm p-6">
-        <div class="flex justify-between items-center mb-4">
-          <div>
-            <h2 class="text-lg font-bold text-slate-800">Product Performance & Decision Matrix</h2>
-            <p class="text-xs text-slate-500">Automated insights to help you restock, promote, or discount products.</p>
-          </div>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="border-b border-slate-200 text-slate-500 text-xs uppercase bg-slate-50">
-                <th class="py-3 px-3">Medicine</th>
-                <th class="py-3 px-3">Stock Level</th>
-                <th class="py-3 px-3">Units Sold</th>
-                <th class="py-3 px-3">Revenue (<span class="currency-label">K</span>)</th>
-                <th class="py-3 px-3">Sales Velocity</th>
-                <th class="py-3 px-3 text-right">Recommended Action</th>
-              </tr>
-            </thead>
-            <tbody id="analytics-table-rows" class="divide-y divide-slate-100 text-sm">
-              <!-- Dynamic Rows -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- MULTI-PAYMENT CHECKOUT MODAL -->
-  <div id="checkout-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex justify-center items-center p-4">
-    <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden transform transition-all">
-      
-      <!-- Modal Header -->
-      <div class="bg-indigo-700 text-white p-5 flex justify-between items-center">
-        <div>
-          <h3 class="text-lg font-bold">Authorize Transaction</h3>
-          <p class="text-xs text-indigo-200">Care Class Pharmacy Payment Gateway</p>
-        </div>
-        <button onclick="closeCheckoutModal()" class="text-indigo-200 hover:text-white text-xl font-bold">&times;</button>
-      </div>
-
-      <!-- Modal Body -->
-      <div class="p-6">
-        
-        <!-- Payable Amount Banner -->
-        <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-5 flex justify-between items-center">
-          <span class="text-sm font-medium text-slate-600">Total Payable Amount:</span>
-          <span id="modal-payable-amount" class="text-2xl font-black text-indigo-700">K0.00</span>
-        </div>
-
-        <!-- Embedded Payment Switcher -->
-        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Switch Gateway</label>
-        <div class="grid grid-cols-3 gap-2.5 mb-5">
-          
-          <button type="button" onclick="selectPaymentMethod('airtel')" id="paybtn-airtel" 
-            class="pay-option-btn border-2 border-red-500 bg-red-50 text-red-700 p-3 rounded-lg flex flex-col items-center justify-center gap-1 transition">
-            <i class="fa-solid fa-mobile-retro text-lg"></i>
-            <span class="text-xs font-bold">Airtel Money</span>
-          </button>
-
-          <button type="button" onclick="selectPaymentMethod('mtn')" id="paybtn-mtn" 
-            class="pay-option-btn border-2 border-slate-200 hover:border-amber-400 p-3 rounded-lg flex flex-col items-center justify-center gap-1 transition">
-            <i class="fa-solid fa-wallet text-lg text-amber-500"></i>
-            <span class="text-xs font-bold text-slate-700">MTN MoMo</span>
-          </button>
-
-          <button type="button" onclick="selectPaymentMethod('zamtel')" id="paybtn-zamtel" 
-            class="pay-option-btn border-2 border-slate-200 hover:border-emerald-500 p-3 rounded-lg flex flex-col items-center justify-center gap-1 transition">
-            <i class="fa-solid fa-money-bill-transfer text-lg text-emerald-600"></i>
-            <span class="text-xs font-bold text-slate-700">Zamtel Money</span>
-          </button>
-
-          <button type="button" onclick="selectPaymentMethod('card')" id="paybtn-card" 
-            class="pay-option-btn border-2 border-slate-200 hover:border-indigo-500 p-3 rounded-lg flex flex-col items-center justify-center gap-1 transition">
-            <i class="fa-solid fa-credit-card text-lg text-indigo-600"></i>
-            <span class="text-xs font-bold text-slate-700">Credit Card</span>
-          </button>
-
-          <button type="button" onclick="selectPaymentMethod('cash')" id="paybtn-cash" 
-            class="pay-option-btn border-2 border-slate-200 hover:border-slate-500 p-3 rounded-lg flex flex-col items-center justify-center gap-1 transition col-span-2">
-            <i class="fa-solid fa-hand-holding-dollar text-lg text-slate-600"></i>
-            <span class="text-xs font-bold text-slate-700">Cash Payment</span>
-          </button>
-
-        </div>
-
-        <!-- Mobile Money Input Container (Airtel / MTN / Zamtel) -->
-        <div id="momo-fields" class="space-y-3 bg-slate-50 p-4 rounded-lg border border-slate-200">
-          <div class="flex justify-between items-center">
-            <span id="momo-provider-title" class="text-xs font-bold text-red-600 uppercase">Airtel Money Push Prompt</span>
-            <span class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">Live Gateway</span>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Customer Mobile Number</label>
-            <div class="relative">
-              <span class="absolute left-3 top-2.5 text-xs text-slate-400 font-mono">+260</span>
-              <input type="tel" id="momo-phone" placeholder="97XXXXXXX / 96XXXXXXX / 95XXXXXXX" value="977123456"
-                class="w-full pl-14 pr-3 py-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500 font-mono">
+        <!-- ================= SECTION 2: INVENTORY MANAGEMENT ================= -->
+        <section id="section-inventory" class="tab-content hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Product Form (Add / Edit) -->
+            <div class="lg:col-span-1 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex justify-between items-center border-b pb-2 mb-4">
+                    <h2 id="inv-form-title" class="text-lg font-bold text-slate-900">Add New Product</h2>
+                    <button id="cancel-edit-btn" onclick="resetInventoryForm()" class="hidden text-xs text-red-600 hover:underline">Cancel Edit</button>
+                </div>
+                
+                <form id="inventory-form" onsubmit="saveProduct(event)" class="space-y-4">
+                    <input type="hidden" id="editing-barcode">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Barcode ID</label>
+                        <input type="text" id="inv-barcode" placeholder="e.g. 600100200305" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Batch Code</label>
+                        <input type="text" id="inv-batch" placeholder="e.g. BAT-2026-300" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Product Name</label>
+                        <input type="text" id="inv-name" placeholder="e.g. Metformin 500mg" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" required>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Unit Price (ZMW)</label>
+                            <input type="number" step="0.01" min="0" id="inv-price" placeholder="0.00" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Initial Stock</label>
+                            <input type="number" min="0" id="inv-stock" placeholder="0" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" required>
+                        </div>
+                    </div>
+                    <button type="submit" id="inv-submit-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg transition text-sm">
+                        Save Product
+                    </button>
+                </form>
             </div>
-            <p class="text-[11px] text-slate-400 mt-1">An instant USSD prompt will be pushed to the customer's device.</p>
-          </div>
+
+            <!-- Inventory Stock Table -->
+            <div class="lg:col-span-2 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-4 mb-4 gap-3">
+                    <h2 class="text-lg font-bold text-slate-900">Stock Directory</h2>
+                    <input type="text" id="inv-search" oninput="renderInventoryTable()" placeholder="Search product name or batch..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none w-full sm:w-64">
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-900 text-white uppercase text-xs">
+                            <tr>
+                                <th class="py-3 px-3">Barcode</th>
+                                <th class="py-3 px-3">Batch Code</th>
+                                <th class="py-3 px-3">Product Name</th>
+                                <th class="py-3 px-3 text-right">Price (ZMW)</th>
+                                <th class="py-3 px-3 text-center">Stock</th>
+                                <th class="py-3 px-3 text-center">Status</th>
+                                <th class="py-3 px-3 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-table-body" class="divide-y divide-slate-200">
+                            <!-- Dynamic Inventory Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= SECTION 3: DAILY REPORTS ================= -->
+        <section id="section-daily-reports" class="tab-content hidden">
+            <div id="daily-report-print-area" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 printable-area">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 pb-4 border-b gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-900">Daily Sales Report</h2>
+                        <p id="report-date-display" class="text-sm text-slate-500">Date: </p>
+                    </div>
+                    <button onclick="printSection('daily-report-print-area')" class="no-print bg-slate-900 hover:bg-slate-800 text-white font-medium px-4 py-2 rounded-lg text-sm transition flex items-center gap-2">
+                        <span>🖨️</span> Print Daily Report
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-900 text-white uppercase text-xs">
+                            <tr>
+                                <th class="py-3 px-4">Barcode</th>
+                                <th class="py-3 px-4">Batch Code</th>
+                                <th class="py-3 px-4">Product Name</th>
+                                <th class="py-3 px-4 text-center">Qty Sold</th>
+                                <th class="py-3 px-4">Payment Method</th>
+                                <th class="py-3 px-4 text-right">Total (ZMW)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="daily-report-table-body" class="divide-y divide-slate-200">
+                            <!-- Dynamic Report Rows -->
+                        </tbody>
+                        <tfoot class="bg-slate-50 font-bold border-t-2 border-slate-300">
+                            <tr>
+                                <td colspan="5" class="py-3 px-4 text-right">Total Day Revenue:</td>
+                                <td id="daily-report-total" class="py-3 px-4 text-right text-emerald-700">ZMW 0.00</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= SECTION 4: PERFORMANCE & ANALYTICS ================= -->
+        <section id="section-analytics" class="tab-content hidden space-y-6">
+            <div id="analytics-print-area" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 printable-area">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 pb-4 border-b gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-900">Product Performance & Analytics</h2>
+                        <p class="text-sm text-slate-500">Individual barcodes, batch codes, turnover charts, and revenue</p>
+                    </div>
+                    <button onclick="printSection('analytics-print-area')" class="no-print bg-slate-900 hover:bg-slate-800 text-white font-medium px-4 py-2 rounded-lg text-sm transition flex items-center gap-2">
+                        <span>🖨️</span> Print Analytics Report
+                    </button>
+                </div>
+
+                <!-- ANALYTICS GRAPHS GRID -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <h3 class="text-sm font-bold text-slate-700 uppercase mb-4 text-center">Revenue by Product (ZMW)</h3>
+                        <div class="relative h-64">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <h3 class="text-sm font-bold text-slate-700 uppercase mb-4 text-center">Units Sold vs Current Stock</h3>
+                        <div class="relative h-64">
+                            <canvas id="stockChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ANALYTICS DATA TABLE -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-900 text-white uppercase text-xs">
+                            <tr>
+                                <th class="py-3 px-4">Visual Barcode</th>
+                                <th class="py-3 px-4">Barcode ID</th>
+                                <th class="py-3 px-4">Batch Code</th>
+                                <th class="py-3 px-4">Product Name</th>
+                                <th class="py-3 px-4 text-center">Units Sold</th>
+                                <th class="py-3 px-4 text-center">Current Stock</th>
+                                <th class="py-3 px-4 text-right">Total Revenue (ZMW)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="analytics-table-body" class="divide-y divide-slate-200">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ================= PAYMENT OPTIONS MODAL ================= -->
+    <div id="payment-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 relative">
+            <h3 class="text-xl font-bold text-slate-900 mb-1">Select Payment Method</h3>
+            <p class="text-sm text-slate-500 mb-4">Total Amount Payable: <span id="modal-pay-amount" class="font-extrabold text-slate-900">ZMW 0.00</span></p>
+
+            <!-- Payment Option Cards -->
+            <div class="space-y-3 mb-5">
+                <label class="flex items-center justify-between p-3.5 border rounded-xl cursor-pointer hover:bg-slate-50 transition border-slate-300">
+                    <div class="flex items-center gap-3">
+                        <input type="radio" name="payment-option" value="Cash" checked onchange="toggleModalRefInput()" class="text-emerald-600 focus:ring-emerald-500 h-4 w-4">
+                        <span class="font-medium text-slate-800">💵 Cash</span>
+                    </div>
+                </label>
+
+                <label class="flex items-center justify-between p-3.5 border rounded-xl cursor-pointer hover:bg-slate-50 transition border-slate-300">
+                    <div class="flex items-center gap-3">
+                        <input type="radio" name="payment-option" value="Airtel Money" onchange="toggleModalRefInput()" class="text-emerald-600 focus:ring-emerald-500 h-4 w-4">
+                        <span class="font-medium text-slate-800">🔴 Airtel Money</span>
+                    </div>
+                </label>
+
+                <label class="flex items-center justify-between p-3.5 border rounded-xl cursor-pointer hover:bg-slate-50 transition border-slate-300">
+                    <div class="flex items-center gap-3">
+                        <input type="radio" name="payment-option" value="MTN Mobile Money" onchange="toggleModalRefInput()" class="text-emerald-600 focus:ring-emerald-500 h-4 w-4">
+                        <span class="font-medium text-slate-800">🟡 MTN Mobile Money</span>
+                    </div>
+                </label>
+
+                <label class="flex items-center justify-between p-3.5 border rounded-xl cursor-pointer hover:bg-slate-50 transition border-slate-300">
+                    <div class="flex items-center gap-3">
+                        <input type="radio" name="payment-option" value="Zamtel Mobile Money" onchange="toggleModalRefInput()" class="text-emerald-600 focus:ring-emerald-500 h-4 w-4">
+                        <span class="font-medium text-slate-800">🟢 Zamtel Mobile Money</span>
+                    </div>
+                </label>
+            </div>
+
+            <!-- Mobile Money Reference / Phone Input -->
+            <div id="modal-ref-container" class="mb-6 hidden">
+                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Phone Number / Transaction Ref</label>
+                <input type="text" id="modal-ref-input" placeholder="e.g. 097XXXXXXX" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            </div>
+
+            <!-- Modal Action Buttons -->
+            <div class="flex gap-3">
+                <button onclick="closeCheckoutModal()" class="w-1/2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-medium py-2.5 rounded-lg transition text-sm">Cancel</button>
+                <button onclick="confirmCheckoutPayment()" class="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg transition text-sm shadow">Confirm & Pay</button>
+            </div>
         </div>
-
-        <!-- Card Input Container -->
-        <div id="card-fields" class="hidden space-y-3 bg-slate-50 p-4 rounded-lg border border-slate-200">
-          <span class="text-xs font-bold text-indigo-600 uppercase">Card Terminal / Online Entry</span>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Cardholder Name</label>
-            <input type="text" placeholder="John Doe" value="Customer Card" class="w-full p-2 border border-slate-300 rounded text-sm">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Card Number (Last 4 digits)</label>
-            <input type="text" maxlength="4" placeholder="4321" value="8821" class="w-full p-2 border border-slate-300 rounded text-sm font-mono">
-          </div>
-        </div>
-
-        <!-- Cash Input Container -->
-        <div id="cash-fields" class="hidden space-y-3 bg-slate-50 p-4 rounded-lg border border-slate-200">
-          <span class="text-xs font-bold text-slate-600 uppercase">Cash Register Calculator</span>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Amount Tendered</label>
-            <input type="number" id="cash-tendered" step="0.01" oninput="calculateCashChange()" placeholder="Enter cash received" 
-              class="w-full p-2 border border-slate-300 rounded text-sm font-mono text-lg font-bold">
-          </div>
-          <div class="flex justify-between items-center text-sm font-semibold pt-1">
-            <span class="text-slate-500">Change Due:</span>
-            <span id="cash-change-due" class="text-emerald-600 font-bold font-mono text-lg">K0.00</span>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Modal Footer with Dynamic Payment Button -->
-      <div class="bg-slate-100 px-6 py-4 flex justify-between items-center border-t border-slate-200">
-        <button onclick="closeCheckoutModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-800">
-          Cancel
-        </button>
-        <!-- Dynamic Payment Embed Button -->
-        <button onclick="confirmAndExecutePayment()" id="confirm-payment-btn" 
-          class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg font-bold text-sm shadow flex items-center gap-2">
-          <i class="fa-solid fa-circle-check"></i> Complete Sale
-        </button>
-      </div>
-
     </div>
-  </div>
 
-  <!-- Application Logic -->
-  <script>
-    let currentCurrency = "K"; 
-    let exchangeRate = 28.50;  
-    let selectedPaymentGateway = "airtel";
+    <!-- JavaScript Application Logic -->
+    <script>
+        // 1. Central Data Store
+        let inventory = [
+            { barcode: '600100200301', batchCode: 'BAT-2026-001', name: 'Paracetamol 500mg', price: 10.00, stock: 150 },
+            { barcode: '600100200302', batchCode: 'BAT-2026-089', name: 'Amoxicillin 250mg', price: 30.00, stock: 12 },
+            { barcode: '600100200303', batchCode: 'BAT-2026-102', name: 'Ibuprofen 400mg', price: 15.00, stock: 80 },
+            { barcode: '600100200304', batchCode: 'BAT-2026-204', name: 'Cetirizine 10mg', price: 20.00, stock: 0 }
+        ];
 
-    const gatewayLabels = {
-      airtel: "Airtel Money",
-      mtn: "MTN MoMo",
-      zamtel: "Zamtel Kwacha",
-      card: "Credit Card",
-      cash: "Cash"
-    };
+        let cart = [];
+        let salesHistory = [
+            { barcode: '600100200301', batchCode: 'BAT-2026-001', name: 'Paracetamol 500mg', qty: 15, price: 10.00, total: 150.00, method: 'Cash', date: new Date().toISOString().split('T')[0] },
+            { barcode: '600100200302', batchCode: 'BAT-2026-089', name: 'Amoxicillin 250mg', qty: 8, price: 30.00, total: 240.00, method: 'Airtel Money', date: new Date().toISOString().split('T')[0] },
+            { barcode: '600100200303', batchCode: 'BAT-2026-102', name: 'Ibuprofen 400mg', qty: 10, price: 15.00, total: 150.00, method: 'MTN Mobile Money', date: new Date().toISOString().split('T')[0] }
+        ];
 
-    function formatMoney(amountInK) {
-      if (currentCurrency === "$") {
-        const usdAmount = amountInK / exchangeRate;
-        return `$${usdAmount.toFixed(2)}`;
-      }
-      return `K${amountInK.toFixed(2)}`;
-    }
+        let revenueChartInstance = null;
+        let stockChartInstance = null;
 
-    // System State
-    let inventory = [
-      { barcode: "8901234", name: "Amoxicillin 500mg", stock: 12, price: 12.50, expiry: "2027-08-15" },
-      { barcode: "8905678", name: "Paracetamol 500mg", stock: 85, price: 4.00, expiry: "2026-11-30" },
-      { barcode: "8909012", name: "Omeprazole 20mg", stock: 5, price: 15.00, expiry: "2026-09-10" },
-      { barcode: "8904321", name: "Ibuprofen 400mg", stock: 60, price: 8.00, expiry: "2027-01-20" }
-    ];
+        // 2. Navigation
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-emerald-600', 'text-white');
+                btn.classList.add('text-slate-300');
+            });
 
-    let cart = [];
-    
-    let salesHistory = [
-      {
-        time: "09:15 AM",
-        items: "Amoxicillin 500mg (x15), Paracetamol 500mg (x20)",
-        total: 267.50,
-        paymentMethod: "Airtel Money",
-        itemsDetail: [
-          { barcode: "8901234", name: "Amoxicillin 500mg", qty: 15, price: 12.50 },
-          { barcode: "8905678", name: "Paracetamol 500mg", qty: 20, price: 4.00 }
-        ]
-      },
-      {
-        time: "10:30 AM",
-        items: "Omeprazole 20mg (x10), Paracetamol 500mg (x15)",
-        total: 210.00,
-        paymentMethod: "MTN MoMo",
-        itemsDetail: [
-          { barcode: "8909012", name: "Omeprazole 20mg", qty: 10, price: 15.00 },
-          { barcode: "8905678", name: "Paracetamol 500mg", qty: 15, price: 4.00 }
-        ]
-      }
-    ];
+            document.getElementById(`section-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            activeBtn.classList.add('bg-emerald-600', 'text-white');
+            activeBtn.classList.remove('text-slate-300');
 
-    let dailyMetrics = { revenue: 477.50, transactions: 2, unitsSold: 60 };
-
-    let chartRevenueInstance = null;
-    let chartStockVsSalesInstance = null;
-
-    function updateExchangeRate() {
-      const val = parseFloat(document.getElementById("exchange-rate-input").value);
-      if (!isNaN(val) && val > 0) {
-        exchangeRate = val;
-        renderAllViews();
-      }
-    }
-
-    function toggleCurrencyDisplay() {
-      currentCurrency = document.getElementById("currency-select").value;
-      document.getElementById("price-input-label").textContent = `Price (${currentCurrency})`;
-      document.querySelectorAll(".currency-label").forEach(el => el.textContent = currentCurrency);
-      renderAllViews();
-    }
-
-    function renderAllViews() {
-      renderCart();
-      renderInventory();
-      renderQuickScans();
-      renderReports();
-      if (!document.getElementById("view-analytics").classList.contains("hidden")) {
-        renderAnalytics();
-      }
-    }
-
-    // --- CHECKOUT & PAYMENT MODAL LOGIC ---
-    function openCheckoutModal(initialMethod = 'airtel') {
-      if (cart.length === 0) return alert("Cart is empty!");
-
-      const cartTotalKwacha = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-      document.getElementById("modal-payable-amount").textContent = formatMoney(cartTotalKwacha);
-      
-      selectPaymentMethod(initialMethod);
-      document.getElementById("checkout-modal").classList.remove("hidden");
-    }
-
-    function closeCheckoutModal() {
-      document.getElementById("checkout-modal").classList.add("hidden");
-    }
-
-    function updateConfirmButtonText() {
-      const cartTotalKwacha = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-      const providerName = gatewayLabels[selectedPaymentGateway];
-      const amountStr = formatMoney(cartTotalKwacha);
-      
-      const btn = document.getElementById("confirm-payment-btn");
-      btn.innerHTML = `<i class="fa-solid fa-circle-check"></i> Pay ${amountStr} via ${providerName}`;
-    }
-
-    function selectPaymentMethod(method) {
-      selectedPaymentGateway = method;
-
-      const buttons = ['airtel', 'mtn', 'zamtel', 'card', 'cash'];
-      buttons.forEach(b => {
-        const el = document.getElementById(`paybtn-${b}`);
-        el.className = "pay-option-btn border-2 border-slate-200 hover:border-slate-400 p-3 rounded-lg flex flex-col items-center justify-center gap-1 transition opacity-75";
-      });
-
-      document.getElementById("momo-fields").classList.add("hidden");
-      document.getElementById("card-fields").classList.add("hidden");
-      document.getElementById("cash-fields").classList.add("hidden");
-
-      const activeBtn = document.getElementById(`paybtn-${method}`);
-      activeBtn.classList.remove("opacity-75");
-
-      if (method === 'airtel') {
-        activeBtn.className = "pay-option-btn border-2 border-red-500 bg-red-50 text-red-700 p-3 rounded-lg flex flex-col items-center justify-center gap-1 transition font-bold shadow-sm";
-        document.getElementById("momo-fields").classList.remove("hidden");
-        document.getElementById("momo-provider-title").textContent = "Airtel Money Push Prompt";
-        document.getElementById("momo-provider-title").className = "text-xs font-bold text-red-600 uppercase";
-      } else if (method === 'mtn') {
-        activeBtn.className = "pay-option-btn border-2 border-amber-400 bg-amber-50 text-amber-800 p-3 rounded-lg flex flex-col items-center justify-center gap-1 transition font-bold shadow-sm";
-        document.getElementById("momo-fields").classList.remove("hidden");
-        document.getElementById("momo-provider-title").textContent = "MTN Mobile Money Gateway";
-        document.getElementById("momo-provider-title").className = "text-xs font-bold text-amber-600 uppercase";
-      } else if (method === 'zamtel') {
-        activeBtn.className = "pay-option-btn border-2 border-emerald-500 bg-emerald-50 text-emerald-800 p-3 rounded-lg flex flex-col items-center justify-center gap-1 transition font-bold shadow-sm";
-        document.getElementById("momo-fields").classList.remove("hidden");
-        document.getElementById("momo-provider-title").textContent = "Zamtel Kwacha Setter";
-        document.getElementById("momo-provider-title").className = "text-xs font-bold text-emerald-600 uppercase";
-      } else if (method === 'card') {
-        activeBtn.className = "pay-option-btn border-2 border-indigo-600 bg-indigo-50 text-indigo-800 p-3 rounded-lg flex flex-col items-center justify-center gap-1 transition font-bold shadow-sm";
-        document.getElementById("card-fields").classList.remove("hidden");
-      } else if (method === 'cash') {
-        activeBtn.className = "pay-option-btn border-2 border-slate-700 bg-slate-100 text-slate-800 p-3 rounded-lg flex flex-col items-center justify-center gap-1 transition font-bold shadow-sm col-span-2";
-        document.getElementById("cash-fields").classList.remove("hidden");
-        calculateCashChange();
-      }
-
-      updateConfirmButtonText();
-    }
-
-    function calculateCashChange() {
-      const cartTotalKwacha = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-      const inputTendered = parseFloat(document.getElementById("cash-tendered").value) || 0;
-
-      const tenderedKwacha = currentCurrency === "$" ? inputTendered * exchangeRate : inputTendered;
-      const changeKwacha = tenderedKwacha - cartTotalKwacha;
-
-      const changeEl = document.getElementById("cash-change-due");
-      if (changeKwacha >= 0) {
-        changeEl.textContent = formatMoney(changeKwacha);
-        changeEl.className = "text-emerald-600 font-bold font-mono text-lg";
-      } else {
-        changeEl.textContent = "Insufficient Cash";
-        changeEl.className = "text-rose-500 font-bold font-mono text-sm";
-      }
-    }
-
-    function confirmAndExecutePayment() {
-      const cartTotalKwacha = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-      
-      if (selectedPaymentGateway === 'cash') {
-        const inputTendered = parseFloat(document.getElementById("cash-tendered").value) || 0;
-        const tenderedKwacha = currentCurrency === "$" ? inputTendered * exchangeRate : inputTendered;
-        if (tenderedKwacha < cartTotalKwacha) {
-          alert("Tendered cash amount is less than total payable!");
-          return;
+            if(tabId === 'inventory') renderInventoryTable();
+            if(tabId === 'daily-reports') renderDailyReports();
+            if(tabId === 'analytics') renderAnalytics();
         }
-      }
 
-      if (['airtel', 'mtn', 'zamtel'].includes(selectedPaymentGateway)) {
-        const phone = document.getElementById("momo-phone").value.trim();
-        if (!phone || phone.length < 8) {
-          alert("Please enter a valid customer mobile number for push prompt!");
-          return;
+        // 3. POS Dropdown Initialization
+        function populateProductDropdown() {
+            const select = document.getElementById('product-select');
+            select.innerHTML = inventory.map(item => 
+                `<option value="${item.barcode}">[BC: ${item.barcode}] | ${item.batchCode} — ${item.name} (ZMW ${item.price.toFixed(2)})</option>`
+            ).join('');
         }
-      }
 
-      const gatewayLabel = gatewayLabels[selectedPaymentGateway];
+        // 4. POS Cart Operations & Fast Scanner
+        function handleBarcodeScan(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const scannedCode = e.target.value.trim();
+                const product = inventory.find(p => p.barcode === scannedCode || p.batchCode === scannedCode);
 
-      let total = 0;
-      let units = 0;
-      let itemSummary = [];
-      let itemsDetail = [];
-
-      cart.forEach(cartItem => {
-        const invItem = inventory.find(i => i.barcode === cartItem.barcode);
-        invItem.stock -= cartItem.qty;
-        total += cartItem.price * cartItem.qty;
-        units += cartItem.qty;
-        itemSummary.push(`${cartItem.name} (x${cartItem.qty})`);
-        itemsDetail.push({
-          barcode: cartItem.barcode,
-          name: cartItem.name,
-          qty: cartItem.qty,
-          price: cartItem.price
-        });
-      });
-
-      salesHistory.unshift({
-        time: new Date().toLocaleTimeString(),
-        items: itemSummary.join(", "),
-        total: total,
-        paymentMethod: gatewayLabel,
-        itemsDetail: itemsDetail
-      });
-
-      dailyMetrics.revenue += total;
-      dailyMetrics.transactions += 1;
-      dailyMetrics.unitsSold += units;
-
-      cart = [];
-      closeCheckoutModal();
-      renderAllViews();
-
-      alert(`Payment Successful via ${gatewayLabel}!\nTotal Charged: ${formatMoney(total)}`);
-    }
-
-    // --- BARCODE HARDWARE LISTENER ---
-    let barcodeBuffer = "";
-    let lastKeyTime = Date.now();
-
-    window.addEventListener("keydown", (e) => {
-      if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-
-      const currentTime = Date.now();
-      if (currentTime - lastKeyTime > 50) barcodeBuffer = "";
-      lastKeyTime = currentTime;
-
-      if (e.key === "Enter") {
-        if (barcodeBuffer.length > 2) {
-          triggerBarcodeScan(barcodeBuffer);
-          barcodeBuffer = "";
+                if (product) {
+                    addDirectToCart(product, 1);
+                    e.target.value = '';
+                } else {
+                    alert(`No product found with Barcode / Batch Code: "${scannedCode}"`);
+                }
+            }
         }
-      } else if (e.key.length === 1) {
-        barcodeBuffer += e.key;
-      }
-    });
 
-    // --- CORE POS ACTIONS ---
-    function triggerBarcodeScan(code) {
-      const item = inventory.find(i => i.barcode === code);
-      if (!item) {
-        alert("Barcode (" + code + ") not found in inventory!");
-        return;
-      }
-      if (item.stock <= 0) {
-        alert(item.name + " is out of stock!");
-        return;
-      }
+        function addDirectToCart(product, qty) {
+            if (product.stock < 1) {
+                alert(`Item "${product.name}" is OUT OF STOCK!`);
+                return;
+            }
 
-      const existingInCart = cart.find(c => c.barcode === code);
-      if (existingInCart) {
-        if (existingInCart.qty < item.stock) {
-          existingInCart.qty++;
-        } else {
-          alert("Cannot exceed available stock limit (" + item.stock + ")");
+            const existingIndex = cart.findIndex(item => item.barcode === product.barcode);
+            const currentCartQty = existingIndex > -1 ? cart[existingIndex].qty : 0;
+
+            if (currentCartQty + qty > product.stock) {
+                alert(`Cannot add more. Remaining available stock: ${product.stock - currentCartQty}`);
+                return;
+            }
+
+            if (existingIndex > -1) {
+                cart[existingIndex].qty += qty;
+            } else {
+                cart.push({ 
+                    barcode: product.barcode, 
+                    batchCode: product.batchCode, 
+                    name: product.name, 
+                    price: product.price, 
+                    qty: qty 
+                });
+            }
+
+            renderCart();
         }
-      } else {
-        cart.push({ ...item, qty: 1 });
-      }
-      renderCart();
-    }
 
-    function handleManualScan() {
-      const input = document.getElementById("barcode-input");
-      if (input.value.trim()) {
-        triggerBarcodeScan(input.value.trim());
-        input.value = "";
-      }
-    }
+        function addToCart(e) {
+            e.preventDefault();
+            const barcode = document.getElementById('product-select').value;
+            const qty = parseInt(document.getElementById('product-qty').value);
+            const product = inventory.find(p => p.barcode === barcode);
 
-    function updateCartQty(barcode, change) {
-      const cartItem = cart.find(c => c.barcode === barcode);
-      const invItem = inventory.find(i => i.barcode === barcode);
-      if (cartItem) {
-        cartItem.qty += change;
-        if (cartItem.qty > invItem.stock) {
-          cartItem.qty = invItem.stock;
-          alert("Maximum stock reached.");
+            if (product) {
+                addDirectToCart(product, qty);
+            }
         }
-        if (cartItem.qty <= 0) {
-          cart = cart.filter(c => c.barcode !== barcode);
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            renderCart();
         }
-      }
-      renderCart();
-    }
 
-    function handleAddStock(e) {
-      e.preventDefault();
-      const code = document.getElementById("inv-barcode").value.trim();
-      const name = document.getElementById("inv-name").value.trim();
-      const qty = parseInt(document.getElementById("inv-qty").value);
-      let inputPrice = parseFloat(document.getElementById("inv-price").value);
-      const expiry = document.getElementById("inv-expiry").value;
+        function renderCart() {
+            const tbody = document.getElementById('cart-table-body');
+            let grandTotal = 0;
 
-      const priceInKwacha = currentCurrency === "$" ? inputPrice * exchangeRate : inputPrice;
+            tbody.innerHTML = cart.map((item, index) => {
+                const itemTotal = item.price * item.qty;
+                grandTotal += itemTotal;
+                return `
+                    <tr class="hover:bg-slate-50">
+                        <td class="py-3 px-3 font-mono text-xs text-slate-600">${item.barcode}</td>
+                        <td class="py-3 px-3 font-semibold text-emerald-800">${item.batchCode}</td>
+                        <td class="py-3 px-3">${item.name}</td>
+                        <td class="py-3 px-3 text-right">${item.price.toFixed(2)}</td>
+                        <td class="py-3 px-3 text-center">${item.qty}</td>
+                        <td class="py-3 px-3 text-right font-medium">${itemTotal.toFixed(2)}</td>
+                        <td class="py-3 px-3 text-center">
+                            <button onclick="removeFromCart(${index})" class="text-red-500 hover:text-red-700 font-bold">×</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
 
-      const existing = inventory.find(i => i.barcode === code);
-      if (existing) {
-        existing.stock += qty;
-        existing.price = priceInKwacha;
-        existing.expiry = expiry;
-      } else {
-        inventory.push({ barcode: code, name, stock: qty, price: priceInKwacha, expiry });
-      }
+            document.getElementById('cart-grand-total').textContent = `ZMW ${grandTotal.toFixed(2)}`;
+        }
 
-      document.getElementById("add-stock-form").reset();
-      renderAllViews();
-      alert("Stock saved!");
-    }
+        // 5. Inventory Management Module Logic
+        function renderInventoryTable() {
+            const searchQuery = document.getElementById('inv-search').value.toLowerCase();
+            const tbody = document.getElementById('inventory-table-body');
 
-    function computeProductPerformance() {
-      const metricsMap = {};
-      inventory.forEach(item => {
-        metricsMap[item.barcode] = {
-          barcode: item.barcode,
-          name: item.name,
-          stock: item.stock,
-          price: item.price,
-          unitsSold: 0,
-          revenue: 0
+            const filteredInventory = inventory.filter(item => 
+                item.name.toLowerCase().includes(searchQuery) ||
+                item.batchCode.toLowerCase().includes(searchQuery) ||
+                item.barcode.includes(searchQuery)
+            );
+
+            tbody.innerHTML = filteredInventory.map(item => {
+                let badgeClass = 'bg-emerald-100 text-emerald-800';
+                let badgeText = 'In Stock';
+                if (item.stock === 0) {
+                    badgeClass = 'bg-red-100 text-red-800';
+                    badgeText = 'Out of Stock';
+                } else if (item.stock <= 15) {
+                    badgeClass = 'bg-amber-100 text-amber-800';
+                    badgeText = 'Low Stock';
+                }
+
+                return `
+                    <tr class="hover:bg-slate-50">
+                        <td class="py-3 px-3 font-mono text-xs text-slate-600">${item.barcode}</td>
+                        <td class="py-3 px-3 font-semibold text-slate-800">${item.batchCode}</td>
+                        <td class="py-3 px-3">${item.name}</td>
+                        <td class="py-3 px-3 text-right">${item.price.toFixed(2)}</td>
+                        <td class="py-3 px-3 text-center font-bold">${item.stock}</td>
+                        <td class="py-3 px-3 text-center">
+                            <span class="${badgeClass} text-xs font-semibold px-2 py-0.5 rounded-full">${badgeText}</span>
+                        </td>
+                        <td class="py-3 px-3 text-center space-x-1">
+                            <button onclick="restockPrompt('${item.barcode}')" class="text-xs bg-slate-100 hover:bg-emerald-100 text-emerald-700 font-semibold px-2 py-1 rounded transition"> Restock</button>
+                            <button onclick="editProduct('${item.barcode}')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2 py-1 rounded transition">Edit</button>
+                            <button onclick="deleteProduct('${item.barcode}')" class="text-xs bg-slate-100 hover:bg-red-100 text-red-600 font-semibold px-2 py-1 rounded transition">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function saveProduct(e) {
+            e.preventDefault();
+            const editingBarcode = document.getElementById('editing-barcode').value;
+            const barcode = document.getElementById('inv-barcode').value.trim();
+            const batchCode = document.getElementById('inv-batch').value.trim();
+            const name = document.getElementById('inv-name').value.trim();
+            const price = parseFloat(document.getElementById('inv-price').value);
+            const stock = parseInt(document.getElementById('inv-stock').value);
+
+            if (editingBarcode) {
+                // Update Existing
+                const index = inventory.findIndex(p => p.barcode === editingBarcode);
+                if (index > -1) {
+                    inventory[index] = { barcode, batchCode, name, price, stock };
+                }
+            } else {
+                // Check if Barcode or Batch Code Exists
+                if (inventory.some(p => p.barcode === barcode)) {
+                    alert(`Product with Barcode "${barcode}" already exists!`);
+                    return;
+                }
+                inventory.push({ barcode, batchCode, name, price, stock });
+            }
+
+            resetInventoryForm();
+            renderInventoryTable();
+            populateProductDropdown();
+        }
+
+        function editProduct(barcode) {
+            const product = inventory.find(p => p.barcode === barcode);
+            if (!product) return;
+
+            document.getElementById('editing-barcode').value = product.barcode;
+            document.getElementById('inv-barcode').value = product.barcode;
+            document.getElementById('inv-batch').value = product.batchCode;
+            document.getElementById('inv-name').value = product.name;
+            document.getElementById('inv-price').value = product.price;
+            document.getElementById('inv-stock').value = product.stock;
+
+            document.getElementById('inv-form-title').textContent = 'Edit Product';
+            document.getElementById('inv-submit-btn').textContent = 'Update Product';
+            document.getElementById('cancel-edit-btn').classList.remove('hidden');
+        }
+
+        function resetInventoryForm() {
+            document.getElementById('editing-barcode').value = '';
+            document.getElementById('inventory-form').reset();
+            document.getElementById('inv-form-title').textContent = 'Add New Product';
+            document.getElementById('inv-submit-btn').textContent = 'Save Product';
+            document.getElementById('cancel-edit-btn').classList.add('hidden');
+        }
+
+        function restockPrompt(barcode) {
+            const product = inventory.find(p => p.barcode === barcode);
+            if (!product) return;
+
+            const addQtyStr = prompt(`Add restock quantity for "${product.name}" (Current stock: ${product.stock}):`, "50");
+            const addQty = parseInt(addQtyStr);
+
+            if (!isNaN(addQty) && addQty > 0) {
+                product.stock += addQty;
+                renderInventoryTable();
+                populateProductDropdown();
+            }
+        }
+
+        function deleteProduct(barcode) {
+            if (confirm(`Are you sure you want to delete product "${barcode}"?`)) {
+                inventory = inventory.filter(p => p.barcode !== barcode);
+                renderInventoryTable();
+                populateProductDropdown();
+            }
+        }
+
+        // 6. Payment Modal & Checkout Flow
+        function openCheckoutModal() {
+            if (cart.length === 0) {
+                alert("Your cart is empty!");
+                return;
+            }
+
+            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            document.getElementById('modal-pay-amount').textContent = `ZMW ${total.toFixed(2)}`;
+            document.getElementById('payment-modal').classList.remove('hidden');
+        }
+
+        function closeCheckoutModal() {
+            document.getElementById('payment-modal').classList.add('hidden');
+        }
+
+        function toggleModalRefInput() {
+            const selectedOption = document.querySelector('input[name="payment-option"]:checked').value;
+            const refContainer = document.getElementById('modal-ref-container');
+            if (selectedOption === 'Cash') {
+                refContainer.classList.add('hidden');
+            } else {
+                refContainer.classList.remove('hidden');
+            }
+        }
+
+        function confirmCheckoutPayment() {
+            const selectedMethod = document.querySelector('input[name="payment-option"]:checked').value;
+            const refInput = document.getElementById('modal-ref-input').value.trim();
+
+            if (selectedMethod !== 'Cash' && !refInput) {
+                alert(`Please enter a phone number or reference for ${selectedMethod}`);
+                return;
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+
+            cart.forEach(cartItem => {
+                const prod = inventory.find(p => p.barcode === cartItem.barcode);
+                if (prod) prod.stock -= cartItem.qty;
+
+                salesHistory.push({
+                    barcode: cartItem.barcode,
+                    batchCode: cartItem.batchCode,
+                    name: cartItem.name,
+                    qty: cartItem.qty,
+                    price: cartItem.price,
+                    total: cartItem.price * cartItem.qty,
+                    method: selectedMethod,
+                    date: today
+                });
+            });
+
+            alert(`Payment of ZMW ${cart.reduce((sum, item) => sum + (item.price * item.qty), 0).toFixed(2)} completed via ${selectedMethod}!`);
+            
+            cart = [];
+            document.getElementById('modal-ref-input').value = '';
+            closeCheckoutModal();
+            renderCart();
+            populateProductDropdown();
+        }
+
+        // 7. Reports & Analytics Functions
+        function renderDailyReports() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('report-date-display').textContent = `Date: ${today}`;
+
+            const todaySales = salesHistory.filter(s => s.date === today);
+            const tbody = document.getElementById('daily-report-table-body');
+            let totalRev = 0;
+
+            tbody.innerHTML = todaySales.map(sale => {
+                totalRev += sale.total;
+                return `
+                    <tr class="hover:bg-slate-50">
+                        <td class="py-3 px-4 font-mono text-xs text-slate-500">${sale.barcode}</td>
+                        <td class="py-3 px-4 font-semibold text-slate-800">${sale.batchCode}</td>
+                        <td class="py-3 px-4">${sale.name}</td>
+                        <td class="py-3 px-4 text-center">${sale.qty}</td>
+                        <td class="py-3 px-4"><span class="bg-slate-100 text-slate-700 text-xs font-semibold px-2 py-1 rounded">${sale.method}</span></td>
+                        <td class="py-3 px-4 text-right">${sale.total.toFixed(2)}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('daily-report-total').textContent = `ZMW ${totalRev.toFixed(2)}`;
+        }
+
+        function renderAnalytics() {
+            const tbody = document.getElementById('analytics-table-body');
+            
+            const performance = inventory.map(item => {
+                const itemSales = salesHistory.filter(s => s.barcode === item.barcode);
+                const totalUnits = itemSales.reduce((sum, s) => sum + s.qty, 0);
+                const totalRevenue = itemSales.reduce((sum, s) => sum + s.total, 0);
+                return {
+                    barcode: item.barcode,
+                    batchCode: item.batchCode,
+                    name: item.name,
+                    unitsSold: totalUnits,
+                    currentStock: item.stock,
+                    revenue: totalRevenue
+                };
+            }).sort((a, b) => b.revenue - a.revenue);
+
+            tbody.innerHTML = performance.map(p => `
+                <tr class="hover:bg-slate-50">
+                    <td class="py-2 px-4">
+                        <svg id="barcode-svg-${p.barcode}" class="h-10"></svg>
+                    </td>
+                    <td class="py-3 px-4 font-mono text-xs font-semibold text-slate-600">${p.barcode}</td>
+                    <td class="py-3 px-4 font-semibold text-slate-800">${p.batchCode}</td>
+                    <td class="py-3 px-4">${p.name}</td>
+                    <td class="py-3 px-4 text-center font-medium">${p.unitsSold}</td>
+                    <td class="py-3 px-4 text-center">${p.currentStock}</td>
+                    <td class="py-3 px-4 text-right font-bold text-emerald-700">${p.revenue.toFixed(2)}</td>
+                </tr>
+            `).join('');
+
+            performance.forEach(p => {
+                JsBarcode(`#barcode-svg-${p.barcode}`, p.barcode, {
+                    format: "CODE128",
+                    height: 30,
+                    width: 1.2,
+                    displayValue: false
+                });
+            });
+
+            renderCharts(performance);
+        }
+
+        function renderCharts(data) {
+            const labels = data.map(d => `${d.name} (${d.batchCode})`);
+            const revenues = data.map(d => d.revenue);
+            const unitsSold = data.map(d => d.unitsSold);
+            const stockLevels = data.map(d => d.currentStock);
+
+            if (revenueChartInstance) revenueChartInstance.destroy();
+            if (stockChartInstance) stockChartInstance.destroy();
+
+            const ctx1 = document.getElementById('revenueChart').getContext('2d');
+            revenueChartInstance = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Revenue (ZMW)',
+                        data: revenues,
+                        backgroundColor: '#059669',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            const ctx2 = document.getElementById('stockChart').getContext('2d');
+            stockChartInstance = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Units Sold',
+                            data: unitsSold,
+                            backgroundColor: '#0284c7',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Current Stock',
+                            data: stockLevels,
+                            backgroundColor: '#cbd5e1',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                }
+            });
+        }
+
+        // Helper Functions
+        function printSection(elementId) {
+            window.print();
+        }
+
+        // Application Startup
+        window.onload = () => {
+            populateProductDropdown();
+            renderCart();
         };
-      });
-
-      salesHistory.forEach(sale => {
-        if (sale.itemsDetail) {
-          sale.itemsDetail.forEach(detail => {
-            if (metricsMap[detail.barcode]) {
-              metricsMap[detail.barcode].unitsSold += detail.qty;
-              metricsMap[detail.barcode].revenue += (detail.qty * detail.price);
-            }
-          });
-        }
-      });
-
-      return Object.values(metricsMap);
-    }
-
-    function renderAnalytics() {
-      const data = computeProductPerformance();
-
-      const sortedByRevenue = [...data].sort((a, b) => b.revenue - a.revenue);
-      const sortedByUnits = [...data].sort((a, b) => b.unitsSold - a.unitsSold);
-
-      const topRevenueProduct = sortedByRevenue[0];
-      const topUnitsProduct = sortedByUnits[0];
-      const deadStockCount = data.filter(d => d.unitsSold === 0).length;
-      const reorderCount = data.filter(d => d.unitsSold > 5 && d.stock < 10).length;
-
-      document.getElementById("kpi-top-revenue").textContent = topRevenueProduct && topRevenueProduct.revenue > 0 ? topRevenueProduct.name : "None";
-      document.getElementById("kpi-top-revenue-val").textContent = topRevenueProduct && topRevenueProduct.revenue > 0 ? formatMoney(topRevenueProduct.revenue) : formatMoney(0);
-
-      document.getElementById("kpi-top-units").textContent = topUnitsProduct && topUnitsProduct.unitsSold > 0 ? topUnitsProduct.name : "None";
-      document.getElementById("kpi-top-units-val").textContent = topUnitsProduct && topUnitsProduct.unitsSold > 0 ? `${topUnitsProduct.unitsSold} units sold` : "0 units sold";
-
-      document.getElementById("kpi-dead-stock").textContent = `${deadStockCount} Items`;
-      document.getElementById("kpi-reorder-count").textContent = `${reorderCount} Items`;
-
-      const tableBody = document.getElementById("analytics-table-rows");
-      tableBody.innerHTML = data.map(item => {
-        let velocityBadge = `<span class="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full text-xs font-semibold">Slow</span>`;
-        let recommendation = `<span class="text-slate-500 font-medium">Maintain Stock</span>`;
-
-        if (item.unitsSold >= 20) {
-          velocityBadge = `<span class="bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1 inline-flex"><i class="fa-solid fa-fire"></i> Fast Moving</span>`;
-        } else if (item.unitsSold > 0) {
-          velocityBadge = `<span class="bg-blue-100 text-blue-800 px-2.5 py-1 rounded-full text-xs font-semibold">Moderate</span>`;
-        } else {
-          velocityBadge = `<span class="bg-rose-100 text-rose-800 px-2.5 py-1 rounded-full text-xs font-semibold">Zero Sales</span>`;
-        }
-
-        if (item.unitsSold === 0 && item.stock > 30) {
-          recommendation = `<span class="text-rose-600 font-bold bg-rose-50 px-2 py-1 rounded border border-rose-200"><i class="fa-solid fa-bullhorn"></i> Discount / Promo</span>`;
-        } else if (item.unitsSold > 5 && item.stock < 10) {
-          recommendation = `<span class="text-amber-600 font-bold bg-amber-50 px-2 py-1 rounded border border-amber-200"><i class="fa-solid fa-triangle-exclamation"></i> Urgent Reorder</span>`;
-        } else if (item.unitsSold >= 15) {
-          recommendation = `<span class="text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded border border-emerald-200"><i class="fa-solid fa-arrow-up-right-dots"></i> Increase Batch Size</span>`;
-        }
-
-        return `
-          <tr class="hover:bg-slate-50">
-            <td class="py-3 px-3 font-semibold text-slate-800">${item.name} <div class="text-xs font-mono text-slate-400">${item.barcode}</div></td>
-            <td class="py-3 px-3 font-bold ${item.stock < 10 ? 'text-rose-600' : 'text-slate-700'}">${item.stock} units</td>
-            <td class="py-3 px-3 font-medium text-slate-700">${item.unitsSold}</td>
-            <td class="py-3 px-3 font-bold text-indigo-700">${formatMoney(item.revenue)}</td>
-            <td class="py-3 px-3">${velocityBadge}</td>
-            <td class="py-3 px-3 text-right text-xs">${recommendation}</td>
-          </tr>
-        `;
-      }).join("");
-
-      renderAnalyticsCharts(data);
-    }
-
-    function renderAnalyticsCharts(data) {
-      const labels = data.map(d => d.name);
-      const revenues = data.map(d => currentCurrency === "$" ? d.revenue / exchangeRate : d.revenue);
-      const unitsSold = data.map(d => d.unitsSold);
-      const currentStock = data.map(d => d.stock);
-
-      if (chartRevenueInstance) chartRevenueInstance.destroy();
-      if (chartStockVsSalesInstance) chartStockVsSalesInstance.destroy();
-
-      const ctxRevenue = document.getElementById("chart-revenue").getContext("2d");
-      chartRevenueInstance = new Chart(ctxRevenue, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: `Revenue (${currentCurrency})`,
-            data: revenues,
-            backgroundColor: 'rgba(79, 70, 229, 0.75)',
-            borderColor: 'rgb(79, 70, 229)',
-            borderWidth: 1,
-            borderRadius: 6
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: { y: { beginAtZero: true } }
-        }
-      });
-
-      const ctxStockVsSales = document.getElementById("chart-stock-vs-sales").getContext("2d");
-      chartStockVsSalesInstance = new Chart(ctxStockVsSales, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [
-            {
-              label: 'Units Sold',
-              data: unitsSold,
-              backgroundColor: 'rgba(16, 185, 129, 0.8)',
-              borderRadius: 4
-            },
-            {
-              label: 'Remaining Stock',
-              data: currentStock,
-              backgroundColor: 'rgba(203, 213, 225, 0.8)',
-              borderRadius: 4
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { position: 'top' } },
-          scales: { y: { beginAtZero: true } }
-        }
-      });
-    }
-
-    function renderCart() {
-      const tbody = document.getElementById("cart-rows");
-      let total = 0;
-      tbody.innerHTML = cart.length === 0 
-        ? `<tr><td colspan="6" class="text-center py-8 text-slate-400">Scan a barcode to add items</td></tr>`
-        : cart.map(item => {
-            const sub = item.price * item.qty;
-            total += sub;
-            return `
-              <tr>
-                <td class="py-3 font-semibold">${item.name}</td>
-                <td class="font-mono text-xs text-slate-500">${item.barcode}</td>
-                <td>${formatMoney(item.price)}</td>
-                <td class="text-center">
-                  <div class="inline-flex items-center gap-2">
-                    <button onclick="updateCartQty('${item.barcode}', -1)" class="w-6 h-6 bg-slate-200 rounded hover:bg-slate-300 font-bold">-</button>
-                    <span>${item.qty}</span>
-                    <button onclick="updateCartQty('${item.barcode}', 1)" class="w-6 h-6 bg-slate-200 rounded hover:bg-slate-300 font-bold">+</button>
-                  </div>
-                </td>
-                <td class="text-right font-bold text-slate-700">${formatMoney(sub)}</td>
-                <td class="text-center">
-                  <button onclick="updateCartQty('${item.barcode}', -${item.qty})" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>
-                </td>
-              </tr>`;
-          }).join("");
-      document.getElementById("cart-total").textContent = formatMoney(total);
-    }
-
-    function renderInventory() {
-      const tbody = document.getElementById("inventory-rows");
-      tbody.innerHTML = inventory.map(i => `
-        <tr class="${i.stock < 10 ? 'bg-rose-50' : ''}">
-          <td class="py-3 font-mono text-xs">${i.barcode}</td>
-          <td class="font-semibold">${i.name}</td>
-          <td><span class="px-2 py-1 rounded text-xs font-bold ${i.stock < 10 ? 'bg-rose-200 text-rose-800' : 'bg-slate-200'}">${i.stock} units</span></td>
-          <td>${formatMoney(i.price)}</td>
-          <td class="text-xs text-slate-500">${i.expiry}</td>
-        </tr>`).join("");
-    }
-
-    function renderQuickScans() {
-      const div = document.getElementById("quick-scan-list");
-      div.innerHTML = inventory.map(i => `
-        <button onclick="triggerBarcodeScan('${i.barcode}')" class="w-full text-left p-3 border border-slate-200 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 flex justify-between items-center transition">
-          <div>
-            <div class="font-semibold text-sm">${i.name}</div>
-            <div class="text-xs font-mono text-slate-400">Barcode: ${i.barcode}</div>
-          </div>
-          <span class="text-indigo-600 font-bold text-sm">${formatMoney(i.price)}</span>
-        </button>`).join("");
-    }
-
-    function renderReports() {
-      document.getElementById("report-revenue").textContent = formatMoney(dailyMetrics.revenue);
-      document.getElementById("report-txs").textContent = dailyMetrics.transactions;
-      document.getElementById("report-units").textContent = dailyMetrics.unitsSold;
-      document.getElementById("report-alerts").textContent = inventory.filter(i => i.stock < 10).length;
-
-      const log = document.getElementById("reports-log-rows");
-      log.innerHTML = salesHistory.length === 0
-        ? `<tr><td colspan="4" class="text-center py-6 text-slate-400">No sales recorded today yet</td></tr>`
-        : salesHistory.map(s => {
-            let methodBadge = `<span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs font-semibold">${s.paymentMethod || 'Cash'}</span>`;
-            if (s.paymentMethod === "Airtel Money") methodBadge = `<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs font-bold"><i class="fa-solid fa-mobile-retro"></i> Airtel Money</span>`;
-            if (s.paymentMethod === "MTN MoMo") methodBadge = `<span class="bg-amber-100 text-amber-900 px-2 py-0.5 rounded text-xs font-bold"><i class="fa-solid fa-wallet"></i> MTN MoMo</span>`;
-            if (s.paymentMethod === "Zamtel Kwacha") methodBadge = `<span class="bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded text-xs font-bold"><i class="fa-solid fa-money-bill-transfer"></i> Zamtel Kwacha</span>`;
-            if (s.paymentMethod === "Credit Card") methodBadge = `<span class="bg-indigo-100 text-indigo-900 px-2 py-0.5 rounded text-xs font-bold"><i class="fa-solid fa-credit-card"></i> Card</span>`;
-
-            return `
-              <tr>
-                <td class="py-3 text-slate-500 text-xs">${s.time}</td>
-                <td>${s.items}</td>
-                <td>${methodBadge}</td>
-                <td class="text-right font-bold text-emerald-600">${formatMoney(s.total)}</td>
-              </tr>`;
-          }).join("");
-    }
-
-    function switchTab(tab) {
-      ['pos', 'inventory', 'reports', 'analytics'].forEach(t => {
-        document.getElementById(`view-${t}`).classList.add('hidden');
-        document.getElementById(`tab-${t}`).className = "tab-btn px-6 py-3 font-semibold text-slate-500 hover:text-indigo-600 flex items-center gap-2";
-      });
-      document.getElementById(`view-${tab}`).classList.remove('hidden');
-      document.getElementById(`tab-${tab}`).className = "tab-btn px-6 py-3 font-semibold text-indigo-600 border-b-2 border-indigo-600 flex items-center gap-2";
-
-      if (tab === 'analytics') {
-        renderAnalytics();
-      }
-    }
-
-    // Init
-    renderAllViews();
-  </script>
+    </script>
 </body>
 </html>
