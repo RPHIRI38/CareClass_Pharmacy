@@ -12,353 +12,526 @@
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <style>
         @media print {
-            body * {
-                visibility: hidden;
-            }
-            .printable-area, .printable-area * {
-                visibility: visible;
-            }
-            .printable-area {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-            }
-            .no-print {
-                display: none !important;
-            }
+            body * { visibility: hidden; }
+            .printable-area, .printable-area * { visibility: visible; }
+            .printable-area { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
         }
     </style>
 </head>
-<body class="bg-slate-100 font-sans text-slate-800 antialiased min-h-screen">
+<body class="bg-slate-100 font-sans text-slate-800 antialiased min-h-screen flex flex-col">
 
-    <!-- Navigation Header -->
-    <header class="bg-slate-900 text-white shadow-md no-print">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
-            <h1 class="text-xl font-bold tracking-wide flex items-center gap-2">
-                <span class="bg-emerald-500 text-white px-2 py-1 rounded-lg text-lg">CareClass</span> 
-                Pharmacy Management System
-            </h1>
-            <nav class="flex flex-wrap justify-center gap-1 bg-slate-800 p-1 rounded-lg">
-                <button onclick="switchTab('checkout')" id="tab-checkout" class="tab-btn px-3 py-2 text-sm font-medium rounded-md bg-emerald-600 text-white transition">POS Checkout</button>
-                <button onclick="switchTab('inventory')" id="tab-inventory" class="tab-btn px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:text-white transition">Inventory</button>
-                <button onclick="switchTab('daily-reports')" id="tab-daily-reports" class="tab-btn px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:text-white transition">Daily Reports</button>
-                <button onclick="switchTab('analytics')" id="tab-analytics" class="tab-btn px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:text-white transition">Performance & Analytics</button>
-            </nav>
-        </div>
-    </header>
-
-    <main class="max-w-7xl mx-auto px-4 py-6">
-
-        <!-- ================= SECTION 1: POS CHECKOUT ================= -->
-        <section id="section-checkout" class="tab-content grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <!-- Barcode Scanner & Dropdown Item Selector -->
-            <div class="lg:col-span-1 bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-5">
-                <h2 class="text-lg font-bold text-slate-900 border-b pb-2">Add Item to Cart</h2>
-                
-                <!-- Instant Barcode Scanner Field -->
-                <div class="bg-emerald-50 p-3.5 rounded-xl border border-emerald-200">
-                    <label class="block text-xs font-bold text-emerald-800 uppercase mb-1">⚡ Quick Scan Barcode</label>
-                    <input type="text" id="barcode-scan-input" placeholder="Scan or type barcode & press Enter..." onkeydown="handleBarcodeScan(event)" class="w-full border border-emerald-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 focus:outline-none bg-white">
-                    <p class="text-[11px] text-emerald-600 mt-1">Press Enter to instantly add 1 unit to cart.</p>
-                </div>
-
-                <div class="relative flex py-1 items-center">
-                    <div class="flex-grow border-t border-slate-200"></div>
-                    <span class="flex-shrink mx-2 text-xs text-slate-400 uppercase font-semibold">or select manually</span>
-                    <div class="flex-grow border-t border-slate-200"></div>
-                </div>
-
-                <!-- Manual Selection Form -->
-                <form id="add-to-cart-form" onsubmit="addToCart(event)" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Select Product</label>
-                        <select id="product-select" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" required>
-                            <!-- Options populated dynamically -->
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Quantity</label>
-                        <input type="number" id="product-qty" min="1" value="1" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" required>
-                    </div>
-                    <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2.5 rounded-lg transition text-sm">
-                        Add to Cart
-                    </button>
-                </form>
+    <!-- ================= LOGIN SCREEN ================= -->
+    <div id="login-screen" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 border border-slate-100">
+            <div class="text-center mb-6">
+                <span class="bg-emerald-500 text-white font-bold px-3 py-1 rounded-lg text-xl tracking-wide inline-block mb-2">CareClass</span>
+                <h2 class="text-2xl font-bold text-slate-900">Pharmacy Management</h2>
+                <p class="text-slate-500 text-sm mt-1">Please sign in to access your branch dashboard</p>
             </div>
 
-            <!-- Cart Table & Trigger Checkout -->
-            <div class="lg:col-span-2 bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
+            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
-                    <h2 class="text-lg font-bold mb-4 text-slate-900 border-b pb-2">Current Cart</h2>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Operating Location / Branch</label>
+                    <select id="login-location" class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white font-medium" required>
+                        <option value="Lusaka Central">Lusaka Central</option>
+                        <option value="Katete Branch">Katete Branch</option>
+                        <option value="Chadiza Branch">Chadiza Branch</option>
+                        <option value="Kitwe Branch">Kitwe Branch</option>
+                        <option value="Chipata Branch">Chipata Branch</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Username</label>
+                    <input type="text" id="login-username" placeholder="Username" required class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Password</label>
+                    <input type="password" id="login-password" placeholder="••••••••" required class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                </div>
+
+                <div id="login-error" class="hidden text-xs text-red-600 font-semibold bg-red-50 p-2.5 rounded-lg text-center border border-red-200"></div>
+
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg transition shadow-md">
+                    Sign In
+                </button>
+            </form>
+
+            <div class="mt-6 pt-4 border-t border-slate-100 text-center">
+                <p class="text-xs text-slate-400 mb-2 uppercase font-semibold">Quick Demo Login Shortcuts</p>
+                <div class="flex gap-2 justify-center">
+                    <button onclick="quickLogin('cashier1')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-3 py-1.5 rounded-md transition">
+                        🔑 Cashier Demo
+                    </button>
+                    <button onclick="quickLogin('admin')" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-medium px-3 py-1.5 rounded-md transition">
+                        🛡️ Admin Demo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP WRAPPER -->
+    <div id="app-content" class="hidden flex-1 flex flex-col">
+
+        <!-- Navigation Header -->
+        <header class="bg-slate-900 text-white shadow-md no-print">
+            <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <span class="bg-emerald-500 text-white font-bold px-2.5 py-1 rounded-lg text-lg">CareClass</span> 
+                    <div>
+                        <h1 class="text-lg font-bold tracking-wide leading-tight">Pharmacy Management</h1>
+                        <p class="text-xs text-emerald-400 font-medium flex items-center gap-1">
+                            <span>📍 Location:</span> <span id="header-location-name" class="font-bold underline">Lusaka Central</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <nav class="flex flex-wrap justify-center gap-1 bg-slate-800 p-1 rounded-lg">
+                    <button onclick="switchTab('checkout')" id="tab-checkout" class="tab-btn px-3 py-2 text-sm font-medium rounded-md bg-emerald-600 text-white transition">POS Checkout</button>
+                    <button onclick="switchTab('inventory')" id="tab-inventory" class="tab-btn px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:text-white transition">Inventory</button>
+                    <button onclick="switchTab('daily-reports')" id="tab-daily-reports" class="tab-btn px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:text-white transition">Daily Reports</button>
+                    <button onclick="switchTab('analytics')" id="tab-analytics" class="tab-btn px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:text-white transition">Analytics</button>
+                    <button onclick="switchTab('users')" id="tab-users" class="tab-btn px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:text-white transition">User Mgmt</button>
+                </nav>
+
+                <!-- Active User Badge & Logout -->
+                <div class="flex items-center gap-3 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 text-xs">
+                    <div>
+                        <span class="text-slate-400 block text-[10px] leading-none uppercase">User</span>
+                        <span id="user-display-name" class="font-bold text-emerald-400">Cashier</span>
+                    </div>
+                    <button onclick="handleLogout()" class="bg-slate-700 hover:bg-red-600 text-white px-2.5 py-1 rounded transition text-xs font-medium">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full">
+
+            <!-- ================= SECTION 1: POS CHECKOUT ================= -->
+            <section id="section-checkout" class="tab-content grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <div class="lg:col-span-1 bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-5">
+                    <h2 class="text-lg font-bold text-slate-900 border-b pb-2">Add Item to Cart</h2>
+                    
+                    <div class="bg-emerald-50 p-3.5 rounded-xl border border-emerald-200">
+                        <label class="block text-xs font-bold text-emerald-800 uppercase mb-1">⚡ Quick Scan Barcode</label>
+                        <input type="text" id="barcode-scan-input" placeholder="Scan barcode & press Enter..." onkeydown="handleBarcodeScan(event)" class="w-full border border-emerald-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 focus:outline-none bg-white">
+                        <p class="text-[11px] text-emerald-600 mt-1">Press Enter to add 1 unit to cart.</p>
+                    </div>
+
+                    <div class="relative flex py-1 items-center">
+                        <div class="flex-grow border-t border-slate-200"></div>
+                        <span class="flex-shrink mx-2 text-xs text-slate-400 uppercase font-semibold">or select manually</span>
+                        <div class="flex-grow border-t border-slate-200"></div>
+                    </div>
+
+                    <form id="add-to-cart-form" onsubmit="addToCart(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Select Product</label>
+                            <select id="product-select" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" required></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Quantity</label>
+                            <input type="number" id="product-qty" min="1" value="1" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" required>
+                        </div>
+                        <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2.5 rounded-lg transition text-sm">
+                            Add to Cart
+                        </button>
+                    </form>
+                </div>
+
+                <div class="lg:col-span-2 bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <h2 class="text-lg font-bold mb-4 text-slate-900 border-b pb-2">Current Cart</h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-50 text-slate-600 uppercase text-xs">
+                                    <tr>
+                                        <th class="py-3 px-3">Barcode</th>
+                                        <th class="py-3 px-3">Batch Code</th>
+                                        <th class="py-3 px-3">Product</th>
+                                        <th class="py-3 px-3 text-right">Price (ZMW)</th>
+                                        <th class="py-3 px-3 text-center">Qty</th>
+                                        <th class="py-3 px-3 text-right">Total (ZMW)</th>
+                                        <th class="py-3 px-3 text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cart-table-body" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 border-t pt-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-slate-600 font-medium">Grand Total:</span>
+                            <span id="cart-grand-total" class="text-2xl font-black text-slate-900">ZMW 0.00</span>
+                        </div>
+
+                        <button onclick="openCheckoutModal()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg shadow-md hover:shadow-lg transition text-base tracking-wide">
+                            CHECKOUT
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= SECTION 2: INVENTORY MANAGEMENT ================= -->
+            <section id="section-inventory" class="tab-content hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-1 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center border-b pb-2 mb-4">
+                        <h2 id="inv-form-title" class="text-lg font-bold text-slate-900">Add New Product</h2>
+                        <button id="cancel-edit-btn" onclick="resetInventoryForm()" class="hidden text-xs text-red-600 hover:underline">Cancel Edit</button>
+                    </div>
+                    
+                    <form id="inventory-form" onsubmit="saveProduct(event)" class="space-y-4">
+                        <input type="hidden" id="editing-barcode">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Barcode ID</label>
+                            <input type="text" id="inv-barcode" placeholder="e.g. 600100200305" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Batch Code</label>
+                            <input type="text" id="inv-batch" placeholder="e.g. BAT-2026-300" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Product Name</label>
+                            <input type="text" id="inv-name" placeholder="e.g. Metformin 500mg" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" required>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Unit Price (ZMW)</label>
+                                <input type="number" step="0.01" min="0" id="inv-price" placeholder="0.00" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Stock</label>
+                                <input type="number" min="0" id="inv-stock" placeholder="0" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" required>
+                            </div>
+                        </div>
+                        <button type="submit" id="inv-submit-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg transition text-sm">
+                            Save Product
+                        </button>
+                    </form>
+                </div>
+
+                <div class="lg:col-span-2 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-4 mb-4 gap-3">
+                        <h2 class="text-lg font-bold text-slate-900">Stock Directory</h2>
+                        <input type="text" id="inv-search" oninput="renderInventoryTable()" placeholder="Search product or batch..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none w-full sm:w-64">
+                    </div>
+
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm">
-                            <thead class="bg-slate-50 text-slate-600 uppercase text-xs">
+                            <thead class="bg-slate-900 text-white uppercase text-xs">
                                 <tr>
                                     <th class="py-3 px-3">Barcode</th>
                                     <th class="py-3 px-3">Batch Code</th>
-                                    <th class="py-3 px-3">Product</th>
+                                    <th class="py-3 px-3">Product Name</th>
                                     <th class="py-3 px-3 text-right">Price (ZMW)</th>
-                                    <th class="py-3 px-3 text-center">Qty</th>
-                                    <th class="py-3 px-3 text-right">Total (ZMW)</th>
-                                    <th class="py-3 px-3 text-center">Action</th>
+                                    <th class="py-3 px-3 text-center">Stock</th>
+                                    <th class="py-3 px-3 text-center">Status</th>
+                                    <th class="py-3 px-3 text-center">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="cart-table-body" class="divide-y divide-slate-100">
-                                <!-- Dynamic Cart Rows -->
-                            </tbody>
+                            <tbody id="inventory-table-body" class="divide-y divide-slate-200"></tbody>
                         </table>
                     </div>
                 </div>
+            </section>
 
-                <div class="mt-6 border-t pt-4">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-slate-600 font-medium">Grand Total:</span>
-                        <span id="cart-grand-total" class="text-2xl font-black text-slate-900">ZMW 0.00</span>
-                    </div>
-
-                    <button onclick="openCheckoutModal()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg shadow-md hover:shadow-lg transition text-base tracking-wide">
-                        CHECKOUT
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- ================= SECTION 2: INVENTORY MANAGEMENT ================= -->
-        <section id="section-inventory" class="tab-content hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <!-- Product Form (Add / Edit) -->
-            <div class="lg:col-span-1 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                <div class="flex justify-between items-center border-b pb-2 mb-4">
-                    <h2 id="inv-form-title" class="text-lg font-bold text-slate-900">Add New Product</h2>
-                    <button id="cancel-edit-btn" onclick="resetInventoryForm()" class="hidden text-xs text-red-600 hover:underline">Cancel Edit</button>
-                </div>
-                
-                <form id="inventory-form" onsubmit="saveProduct(event)" class="space-y-4">
-                    <input type="hidden" id="editing-barcode">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Barcode ID</label>
-                        <input type="text" id="inv-barcode" placeholder="e.g. 600100200305" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" required>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Batch Code</label>
-                        <input type="text" id="inv-batch" placeholder="e.g. BAT-2026-300" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" required>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Product Name</label>
-                        <input type="text" id="inv-name" placeholder="e.g. Metformin 500mg" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" required>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
+            <!-- ================= SECTION 3: DAILY REPORTS ================= -->
+            <section id="section-daily-reports" class="tab-content hidden">
+                <div id="daily-report-print-area" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 printable-area">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 pb-4 border-b gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Unit Price (ZMW)</label>
-                            <input type="number" step="0.01" min="0" id="inv-price" placeholder="0.00" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" required>
+                            <h1 class="text-2xl font-bold text-slate-900">Care Class Pharmacy</h1>
+                            <h2 class="text-xl font-bold text-slate-700">Daily Sales Report</h2>
+                            <p class="text-sm text-slate-500">
+                                Location: <span id="report-location-display" class="font-bold text-slate-800">All Locations</span> | 
+                                Date: <span id="report-date-display"></span>
+                            </p>
+                        </div>
+                        <button onclick="printSection('daily-report-print-area')" class="no-print bg-slate-900 hover:bg-slate-800 text-white font-medium px-4 py-2 rounded-lg text-sm transition flex items-center gap-2">
+                            <span>🖨️</span> Print Daily Report
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-900 text-white uppercase text-xs">
+                                <tr>
+                                    <th class="py-3 px-4">Location</th>
+                                    <th class="py-3 px-4">Barcode / Batch</th>
+                                    <th class="py-3 px-4">Product Name</th>
+                                    <th class="py-3 px-4 text-center">Qty</th>
+                                    <th class="py-3 px-4">Payment Method</th>
+                                    <th class="py-3 px-4 text-right">Total (ZMW)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="daily-report-table-body" class="divide-y divide-slate-200"></tbody>
+                            <tfoot class="bg-slate-50 font-bold border-t-2 border-slate-300">
+                                <tr>
+                                    <td colspan="5" class="py-3 px-4 text-right">Total Revenue:</td>
+                                    <td id="daily-report-total" class="py-3 px-4 text-right text-emerald-700">ZMW 0.00</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= SECTION 4: PERFORMANCE & ANALYTICS ================= -->
+            <section id="section-analytics" class="tab-content hidden space-y-6">
+                <div id="analytics-print-area" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 printable-area">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 pb-4 border-b gap-4">
+                        <div>
+                            <h1 class="text-2xl font-bold text-slate-900">Care Class Pharmacy</h1>
+                            <h2 class="text-xl font-bold text-slate-700">Product Performance & Analytics</h2>
+                        </div>
+                        <button onclick="printSection('analytics-print-area')" class="no-print bg-slate-900 hover:bg-slate-800 text-white font-medium px-4 py-2 rounded-lg text-sm transition">
+                            🖨️ Print Report
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <h3 class="text-sm font-bold text-slate-700 uppercase mb-4 text-center">Revenue by Product (ZMW)</h3>
+                            <div class="relative h-64"><canvas id="revenueChart"></canvas></div>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <h3 class="text-sm font-bold text-slate-700 uppercase mb-4 text-center">Units Sold vs Stock</h3>
+                            <div class="relative h-64"><canvas id="stockChart"></canvas></div>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-900 text-white uppercase text-xs">
+                                <tr>
+                                    <th class="py-3 px-4">Barcode</th>
+                                    <th class="py-3 px-4">Batch Code</th>
+                                    <th class="py-3 px-4">Product Name</th>
+                                    <th class="py-3 px-4 text-center">Units Sold</th>
+                                    <th class="py-3 px-4 text-center">Current Stock</th>
+                                    <th class="py-3 px-4 text-right">Total Revenue (ZMW)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="analytics-table-body" class="divide-y divide-slate-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= SECTION 5: USER MANAGEMENT (ADMIN ONLY) ================= -->
+            <section id="section-users" class="tab-content hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Add New User Form -->
+                <div class="lg:col-span-1 bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                    <h2 class="text-lg font-bold text-slate-900 border-b pb-2">Add New System User</h2>
+                    <form id="add-user-form" onsubmit="handleAddUser(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Username</label>
+                            <input type="text" id="user-new-name" placeholder="e.g. katete_cashier" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Initial Stock</label>
-                            <input type="number" min="0" id="inv-stock" placeholder="0" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" required>
+                            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Password</label>
+                            <input type="password" id="user-new-pass" placeholder="••••••••" required class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                         </div>
-                    </div>
-                    <button type="submit" id="inv-submit-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg transition text-sm">
-                        Save Product
-                    </button>
-                </form>
-            </div>
-
-            <!-- Inventory Stock Table -->
-            <div class="lg:col-span-2 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-4 mb-4 gap-3">
-                    <h2 class="text-lg font-bold text-slate-900">Stock Directory</h2>
-                    <input type="text" id="inv-search" oninput="renderInventoryTable()" placeholder="Search product name or batch..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none w-full sm:w-64">
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-slate-900 text-white uppercase text-xs">
-                            <tr>
-                                <th class="py-3 px-3">Barcode</th>
-                                <th class="py-3 px-3">Batch Code</th>
-                                <th class="py-3 px-3">Product Name</th>
-                                <th class="py-3 px-3 text-right">Price (ZMW)</th>
-                                <th class="py-3 px-3 text-center">Stock</th>
-                                <th class="py-3 px-3 text-center">Status</th>
-                                <th class="py-3 px-3 text-center">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="inventory-table-body" class="divide-y divide-slate-200">
-                            <!-- Dynamic Inventory Rows -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- ================= SECTION 3: DAILY REPORTS ================= -->
-        <section id="section-daily-reports" class="tab-content hidden">
-            <div id="daily-report-print-area" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 printable-area">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 pb-4 border-b gap-4">
-                    <div>
-                        <h1 class="text-2xl font-bold text-slate-1000">Care Class Pharmacy</h1>
-                        <h2 class="text-2xl font-bold text-slate-900">Daily Sales Report</h2>
-                        <p id="report-date-display" class="text-sm text-slate-500">Date: </p>
-                    </div>
-                    <button onclick="printSection('daily-report-print-area')" class="no-print bg-slate-900 hover:bg-slate-800 text-white font-medium px-4 py-2 rounded-lg text-sm transition flex items-center gap-2">
-                        <span>🖨️</span> Print Daily Report
-                    </button>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-slate-900 text-white uppercase text-xs">
-                            <tr>
-                                <th class="py-3 px-4">Barcode</th>
-                                <th class="py-3 px-4">Batch Code</th>
-                                <th class="py-3 px-4">Product Name</th>
-                                <th class="py-3 px-4 text-center">Qty Sold</th>
-                                <th class="py-3 px-4">Payment Method</th>
-                                <th class="py-3 px-4 text-right">Total (ZMW)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="daily-report-table-body" class="divide-y divide-slate-200">
-                            <!-- Dynamic Report Rows -->
-                        </tbody>
-                        <tfoot class="bg-slate-50 font-bold border-t-2 border-slate-300">
-                            <tr>
-                                <td colspan="5" class="py-3 px-4 text-right">Total Day Revenue:</td>
-                                <td id="daily-report-total" class="py-3 px-4 text-right text-emerald-700">ZMW 0.00</td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- ================= SECTION 4: PERFORMANCE & ANALYTICS ================= -->
-        <section id="section-analytics" class="tab-content hidden space-y-6">
-            <div id="analytics-print-area" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 printable-area">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 pb-4 border-b gap-4">
-                    <div>
-                        <h2 class="text-2xl font-bold text-slate-900">Product Performance & Analytics</h2>
-                        <p class="text-sm text-slate-500">Individual barcodes, batch codes, turnover charts, and revenue</p>
-                    </div>
-                    <button onclick="printSection('analytics-print-area')" class="no-print bg-slate-900 hover:bg-slate-800 text-white font-medium px-4 py-2 rounded-lg text-sm transition flex items-center gap-2">
-                        <span>🖨️</span> Print Analytics Report
-                    </button>
-                </div>
-
-                <!-- ANALYTICS GRAPHS GRID -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                        <h3 class="text-sm font-bold text-slate-700 uppercase mb-4 text-center">Revenue by Product (ZMW)</h3>
-                        <div class="relative h-64">
-                            <canvas id="revenueChart"></canvas>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">System Role</label>
+                            <select id="user-new-role" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
+                                <option value="cashier">Cashier (POS & Daily Reports Only)</option>
+                                <option value="admin">Administrator / Manager (Full Access)</option>
+                            </select>
                         </div>
-                    </div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                        <h3 class="text-sm font-bold text-slate-700 uppercase mb-4 text-center">Units Sold vs Current Stock</h3>
-                        <div class="relative h-64">
-                            <canvas id="stockChart"></canvas>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Default Operating Location</label>
+                            <select id="user-new-location" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
+                                <option value="Lusaka Central">Lusaka Central</option>
+                                <option value="Katete Branch">Katete Branch</option>
+                                <option value="Chadiza Branch">Chadiza Branch</option>
+                                <option value="Kitwe Branch">Kitwe Branch</option>
+                                <option value="Chipata Branch">Chipata Branch</option>
+                            </select>
                         </div>
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg transition text-sm">
+                            Create Account
+                        </button>
+                    </form>
+                </div>
+
+                <!-- User List & Access Control Actions -->
+                <div class="lg:col-span-2 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-lg font-bold text-slate-900 border-b pb-4 mb-4">User Accounts Directory</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-900 text-white uppercase text-xs">
+                                <tr>
+                                    <th class="py-3 px-3">Username</th>
+                                    <th class="py-3 px-3">Role</th>
+                                    <th class="py-3 px-3">Default Location</th>
+                                    <th class="py-3 px-3 text-center">Status</th>
+                                    <th class="py-3 px-3 text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body" class="divide-y divide-slate-200"></tbody>
+                        </table>
                     </div>
                 </div>
+            </section>
 
-                <!-- ANALYTICS DATA TABLE -->
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-slate-900 text-white uppercase text-xs">
-                            <tr>
-                                <th class="py-3 px-4">Visual Barcode</th>
-                                <th class="py-3 px-4">Barcode ID</th>
-                                <th class="py-3 px-4">Batch Code</th>
-                                <th class="py-3 px-4">Product Name</th>
-                                <th class="py-3 px-4 text-center">Units Sold</th>
-                                <th class="py-3 px-4 text-center">Current Stock</th>
-                                <th class="py-3 px-4 text-right">Total Revenue (ZMW)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="analytics-table-body" class="divide-y divide-slate-200">
-                            <!-- Injected dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
+        </main>
+    </div>
 
-    </main>
-
-    <!-- ================= PAYMENT OPTIONS MODAL ================= -->
+    <!-- ================= PAYMENT MODAL ================= -->
     <div id="payment-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 relative">
             <h3 class="text-xl font-bold text-slate-900 mb-1">Select Payment Method</h3>
-            <p class="text-sm text-slate-500 mb-4">Total Amount Payable: <span id="modal-pay-amount" class="font-extrabold text-slate-900">ZMW 0.00</span></p>
+            <p class="text-sm text-slate-500 mb-4">Total Payable: <span id="modal-pay-amount" class="font-extrabold text-slate-900">ZMW 0.00</span></p>
 
-            <!-- Payment Option Cards -->
-            <div class="space-y-3 mb-5">
-                <label class="flex items-center justify-between p-3.5 border rounded-xl cursor-pointer hover:bg-slate-50 transition border-slate-300">
-                    <div class="flex items-center gap-3">
-                        <input type="radio" name="payment-option" value="Cash" checked onchange="toggleModalRefInput()" class="text-emerald-600 focus:ring-emerald-500 h-4 w-4">
-                        <span class="font-medium text-slate-800">💵 Cash</span>
-                    </div>
+            <div class="space-y-2 mb-4">
+                <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-slate-50">
+                    <input type="radio" name="payment-option" value="Cash" checked onchange="toggleModalRefInput()" class="text-emerald-600">
+                    <span class="font-medium text-slate-800">💵 Cash</span>
                 </label>
-
-                <label class="flex items-center justify-between p-3.5 border rounded-xl cursor-pointer hover:bg-slate-50 transition border-slate-300">
-                    <div class="flex items-center gap-3">
-                        <input type="radio" name="payment-option" value="Airtel Money" onchange="toggleModalRefInput()" class="text-emerald-600 focus:ring-emerald-500 h-4 w-4">
-                        <span class="font-medium text-slate-800">🔴 Airtel Money</span>
-                    </div>
+                <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-slate-50">
+                    <input type="radio" name="payment-option" value="Credit/Debit Card" onchange="toggleModalRefInput()" class="text-emerald-600">
+                    <span class="font-medium text-slate-800">💳 Credit / Debit Card</span>
                 </label>
-
-                <label class="flex items-center justify-between p-3.5 border rounded-xl cursor-pointer hover:bg-slate-50 transition border-slate-300">
-                    <div class="flex items-center gap-3">
-                        <input type="radio" name="payment-option" value="MTN Mobile Money" onchange="toggleModalRefInput()" class="text-emerald-600 focus:ring-emerald-500 h-4 w-4">
-                        <span class="font-medium text-slate-800">🟡 MTN Mobile Money</span>
-                    </div>
+                <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-slate-50">
+                    <input type="radio" name="payment-option" value="Airtel Money" onchange="toggleModalRefInput()" class="text-emerald-600">
+                    <span class="font-medium text-slate-800">🔴 Airtel Money</span>
                 </label>
-
-                <label class="flex items-center justify-between p-3.5 border rounded-xl cursor-pointer hover:bg-slate-50 transition border-slate-300">
-                    <div class="flex items-center gap-3">
-                        <input type="radio" name="payment-option" value="Zamtel Mobile Money" onchange="toggleModalRefInput()" class="text-emerald-600 focus:ring-emerald-500 h-4 w-4">
-                        <span class="font-medium text-slate-800">🟢 Zamtel Mobile Money</span>
-                    </div>
+                <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-slate-50">
+                    <input type="radio" name="payment-option" value="MTN Mobile Money" onchange="toggleModalRefInput()" class="text-emerald-600">
+                    <span class="font-medium text-slate-800">🟡 MTN Mobile Money</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-slate-50">
+                    <input type="radio" name="payment-option" value="Zamtel Mobile Money" onchange="toggleModalRefInput()" class="text-emerald-600">
+                    <span class="font-medium text-slate-800">🟢 Zamtel Mobile Money</span>
                 </label>
             </div>
 
-            <!-- Mobile Money Reference / Phone Input -->
-            <div id="modal-ref-container" class="mb-6 hidden">
-                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Phone Number / Transaction Ref</label>
-                <input type="text" id="modal-ref-input" placeholder="e.g. 097XXXXXXX" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            <div id="modal-ref-container" class="mb-5 hidden">
+                <label id="modal-ref-label" class="block text-xs font-bold text-slate-600 uppercase mb-1">Reference / Phone</label>
+                <input type="text" id="modal-ref-input" placeholder="Enter reference code..." class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
             </div>
 
-            <!-- Modal Action Buttons -->
             <div class="flex gap-3">
-                <button onclick="closeCheckoutModal()" class="w-1/2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-medium py-2.5 rounded-lg transition text-sm">Cancel</button>
-                <button onclick="confirmCheckoutPayment()" class="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg transition text-sm shadow">Confirm & Pay</button>
+                <button onclick="closeCheckoutModal()" class="w-1/2 bg-slate-200 text-slate-800 font-medium py-2.5 rounded-lg">Cancel</button>
+                <button onclick="confirmCheckoutPayment()" class="w-1/2 bg-emerald-600 text-white font-bold py-2.5 rounded-lg shadow">Confirm & Pay</button>
             </div>
         </div>
     </div>
 
     <!-- JavaScript Application Logic -->
     <script>
-        // 1. Central Data Store
-        let inventory = [
-            { barcode: '600100200301', batchCode: 'BAT-2026-001', name: 'Paracetamol 500mg', price: 10.00, stock: 150 },
-            { barcode: '600100200302', batchCode: 'BAT-2026-089', name: 'Amoxicillin 250mg', price: 30.00, stock: 12 },
-            { barcode: '600100200303', batchCode: 'BAT-2026-102', name: 'Ibuprofen 400mg', price: 15.00, stock: 80 },
-            { barcode: '600100200304', batchCode: 'BAT-2026-204', name: 'Cetirizine 10mg', price: 20.00, stock: 0 }
+        // Default System Seed Data
+        const defaultUsers = [
+            { username: 'admin', password: '123', role: 'admin', location: 'Lusaka Central', status: 'Active' },
+            { username: 'cashier1', password: '123', role: 'cashier', location: 'Katete Branch', status: 'Active' },
+            { username: 'chadiza_cashier', password: '123', role: 'cashier', location: 'Chadiza Branch', status: 'Active' }
         ];
 
-        let cart = [];
-        let salesHistory = [
-            { barcode: '600100200301', batchCode: 'BAT-2026-001', name: 'Paracetamol 500mg', qty: 15, price: 10.00, total: 150.00, method: 'Cash', date: new Date().toISOString().split('T')[0] },
-            { barcode: '600100200302', batchCode: 'BAT-2026-089', name: 'Amoxicillin 250mg', qty: 8, price: 30.00, total: 240.00, method: 'Airtel Money', date: new Date().toISOString().split('T')[0] },
-            { barcode: '600100200303', batchCode: 'BAT-2026-102', name: 'Ibuprofen 400mg', qty: 10, price: 15.00, total: 150.00, method: 'MTN Mobile Money', date: new Date().toISOString().split('T')[0] }
+        const defaultInventory = [
+            { barcode: '600100200301', batchCode: 'BAT-2026-001', name: 'Paracetamol 500mg', price: 10.00, stock: 150 },
+            { barcode: '600100200302', batchCode: 'BAT-2026-089', name: 'Amoxicillin 250mg', price: 30.00, stock: 45 },
+            { barcode: '600100200303', batchCode: 'BAT-2026-102', name: 'Ibuprofen 400mg', price: 15.00, stock: 80 }
         ];
+
+        // State Variables loaded from LocalStorage
+        let users = JSON.parse(localStorage.getItem('careclass_users')) || defaultUsers;
+        let inventory = JSON.parse(localStorage.getItem('careclass_inventory')) || defaultInventory;
+        let salesHistory = JSON.parse(localStorage.getItem('careclass_sales')) || [];
+        let currentUser = null;
+        let cart = [];
 
         let revenueChartInstance = null;
         let stockChartInstance = null;
 
-        // 2. Navigation
+        // Sync Data to LocalStorage
+        function saveData() {
+            localStorage.setItem('careclass_users', JSON.stringify(users));
+            localStorage.setItem('careclass_inventory', JSON.stringify(inventory));
+            localStorage.setItem('careclass_sales', JSON.stringify(salesHistory));
+        }
+
+        // Authentication & Location
+        function handleLogin(e) {
+            e.preventDefault();
+            const usernameInput = document.getElementById('login-username').value.trim();
+            const passwordInput = document.getElementById('login-password').value;
+            const locationSelected = document.getElementById('login-location').value;
+            const errorDiv = document.getElementById('login-error');
+
+            const user = users.find(u => u.username.toLowerCase() === usernameInput.toLowerCase());
+
+            if (!user || user.password !== passwordInput) {
+                errorDiv.textContent = "Invalid username or password!";
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            if (user.status === 'Suspended') {
+                errorDiv.textContent = "Account suspended! Please contact the administrator.";
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            currentUser = { username: user.username, role: user.role, location: locationSelected };
+            errorDiv.classList.add('hidden');
+            applyUserPermissions();
+        }
+
+        function quickLogin(username) {
+            const user = users.find(u => u.username === username);
+            if (user) {
+                document.getElementById('login-username').value = user.username;
+                document.getElementById('login-password').value = user.password;
+                document.getElementById('login-location').value = user.location || 'Lusaka Central';
+                document.getElementById('login-form').dispatchEvent(new Event('submit'));
+            }
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            document.getElementById('app-content').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+            document.getElementById('login-form').reset();
+        }
+
+        function applyUserPermissions() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-content').classList.remove('hidden');
+
+            document.getElementById('header-location-name').textContent = currentUser.location;
+            document.getElementById('user-display-name').textContent = `${currentUser.username} (${currentUser.role})`;
+
+            const tabInv = document.getElementById('tab-inventory');
+            const tabAnalytics = document.getElementById('tab-analytics');
+            const tabUsers = document.getElementById('tab-users');
+
+            if (currentUser.role === 'cashier') {
+                tabInv.classList.add('hidden');
+                tabAnalytics.classList.add('hidden');
+                tabUsers.classList.add('hidden');
+            } else {
+                tabInv.classList.remove('hidden');
+                tabAnalytics.classList.remove('hidden');
+                tabUsers.classList.remove('hidden');
+            }
+
+            switchTab('checkout');
+            populateProductDropdown();
+        }
+
         function switchTab(tabId) {
+            if (currentUser.role === 'cashier' && (tabId === 'inventory' || tabId === 'analytics' || tabId === 'users')) {
+                alert('Access Restricted');
+                return;
+            }
+
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('bg-emerald-600', 'text-white');
@@ -367,64 +540,54 @@
 
             document.getElementById(`section-${tabId}`).classList.remove('hidden');
             const activeBtn = document.getElementById(`tab-${tabId}`);
-            activeBtn.classList.add('bg-emerald-600', 'text-white');
-            activeBtn.classList.remove('text-slate-300');
+            if(activeBtn) {
+                activeBtn.classList.add('bg-emerald-600', 'text-white');
+                activeBtn.classList.remove('text-slate-300');
+            }
 
             if(tabId === 'inventory') renderInventoryTable();
             if(tabId === 'daily-reports') renderDailyReports();
             if(tabId === 'analytics') renderAnalytics();
+            if(tabId === 'users') renderUsersTable();
         }
 
-        // 3. POS Dropdown Initialization
+        // POS Logic
         function populateProductDropdown() {
             const select = document.getElementById('product-select');
-            select.innerHTML = inventory.map(item => 
-                `<option value="${item.barcode}">[BC: ${item.barcode}] | ${item.batchCode} — ${item.name} (ZMW ${item.price.toFixed(2)})</option>`
+            select.innerHTML = inventory.map(i => 
+                `<option value="${i.barcode}">[BC: ${i.barcode}] ${i.name} — ZMW ${i.price.toFixed(2)}</option>`
             ).join('');
         }
 
-        // 4. POS Cart Operations & Fast Scanner
         function handleBarcodeScan(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 const scannedCode = e.target.value.trim();
                 const product = inventory.find(p => p.barcode === scannedCode || p.batchCode === scannedCode);
-
                 if (product) {
                     addDirectToCart(product, 1);
                     e.target.value = '';
                 } else {
-                    alert(`No product found with Barcode / Batch Code: "${scannedCode}"`);
+                    alert(`Product not found: "${scannedCode}"`);
                 }
             }
         }
 
         function addDirectToCart(product, qty) {
             if (product.stock < 1) {
-                alert(`Item "${product.name}" is OUT OF STOCK!`);
+                alert(`"${product.name}" is OUT OF STOCK!`);
+                return;
+            }
+            const existing = cart.find(i => i.barcode === product.barcode);
+            const inCart = existing ? existing.qty : 0;
+
+            if (inCart + qty > product.stock) {
+                alert(`Cannot add more than available stock (${product.stock})`);
                 return;
             }
 
-            const existingIndex = cart.findIndex(item => item.barcode === product.barcode);
-            const currentCartQty = existingIndex > -1 ? cart[existingIndex].qty : 0;
-
-            if (currentCartQty + qty > product.stock) {
-                alert(`Cannot add more. Remaining available stock: ${product.stock - currentCartQty}`);
-                return;
-            }
-
-            if (existingIndex > -1) {
-                cart[existingIndex].qty += qty;
-            } else {
-                cart.push({ 
-                    barcode: product.barcode, 
-                    batchCode: product.batchCode, 
-                    name: product.name, 
-                    price: product.price, 
-                    qty: qty 
-                });
-            }
-
+            if (existing) { existing.qty += qty; }
+            else { cart.push({ barcode: product.barcode, batchCode: product.batchCode, name: product.name, price: product.price, qty: qty }); }
             renderCart();
         }
 
@@ -433,10 +596,7 @@
             const barcode = document.getElementById('product-select').value;
             const qty = parseInt(document.getElementById('product-qty').value);
             const product = inventory.find(p => p.barcode === barcode);
-
-            if (product) {
-                addDirectToCart(product, qty);
-            }
+            if (product) addDirectToCart(product, qty);
         }
 
         function removeFromCart(index) {
@@ -447,10 +607,9 @@
         function renderCart() {
             const tbody = document.getElementById('cart-table-body');
             let grandTotal = 0;
-
             tbody.innerHTML = cart.map((item, index) => {
-                const itemTotal = item.price * item.qty;
-                grandTotal += itemTotal;
+                const total = item.price * item.qty;
+                grandTotal += total;
                 return `
                     <tr class="hover:bg-slate-50">
                         <td class="py-3 px-3 font-mono text-xs text-slate-600">${item.barcode}</td>
@@ -458,57 +617,97 @@
                         <td class="py-3 px-3">${item.name}</td>
                         <td class="py-3 px-3 text-right">${item.price.toFixed(2)}</td>
                         <td class="py-3 px-3 text-center">${item.qty}</td>
-                        <td class="py-3 px-3 text-right font-medium">${itemTotal.toFixed(2)}</td>
+                        <td class="py-3 px-3 text-right font-medium">${total.toFixed(2)}</td>
                         <td class="py-3 px-3 text-center">
-                            <button onclick="removeFromCart(${index})" class="text-red-500 hover:text-red-700 font-bold">×</button>
+                            <button onclick="removeFromCart(${index})" class="text-red-500 font-bold">×</button>
                         </td>
                     </tr>
                 `;
             }).join('');
-
             document.getElementById('cart-grand-total').textContent = `ZMW ${grandTotal.toFixed(2)}`;
         }
 
-        // 5. Inventory Management Module Logic
+        // Payment Processing
+        function openCheckoutModal() {
+            if (cart.length === 0) return alert('Cart is empty!');
+            const grandTotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+            document.getElementById('modal-pay-amount').textContent = `ZMW ${grandTotal.toFixed(2)}`;
+            document.getElementById('payment-modal').classList.remove('hidden');
+            toggleModalRefInput();
+        }
+
+        function closeCheckoutModal() { document.getElementById('payment-modal').classList.add('hidden'); }
+
+        function toggleModalRefInput() {
+            const option = document.querySelector('input[name="payment-option"]:checked').value;
+            const refContainer = document.getElementById('modal-ref-container');
+            const refLabel = document.getElementById('modal-ref-label');
+            
+            if (option === 'Cash') refContainer.classList.add('hidden');
+            else {
+                refContainer.classList.remove('hidden');
+                refLabel.textContent = option === 'Credit/Debit Card' ? 'Card Digits / Auth Ref' : 'Mobile / Txn Reference';
+            }
+        }
+
+        function confirmCheckoutPayment() {
+            const option = document.querySelector('input[name="payment-option"]:checked').value;
+            const refInput = document.getElementById('modal-ref-input').value.trim();
+            const todayDate = new Date().toISOString().split('T')[0];
+
+            if (option !== 'Cash' && !refInput) return alert(`Please enter details for ${option}`);
+
+            const fullMethod = option === 'Cash' ? 'Cash' : `${option} (${refInput})`;
+
+            cart.forEach(item => {
+                const invItem = inventory.find(p => p.barcode === item.barcode);
+                if (invItem) invItem.stock -= item.qty;
+
+                salesHistory.push({
+                    barcode: item.barcode,
+                    batchCode: item.batchCode,
+                    name: item.name,
+                    qty: item.qty,
+                    price: item.price,
+                    total: item.price * item.qty,
+                    method: fullMethod,
+                    location: currentUser.location,
+                    date: todayDate
+                });
+            });
+
+            saveData();
+            cart = [];
+            renderCart();
+            populateProductDropdown();
+            closeCheckoutModal();
+            alert('Payment recorded successfully!');
+        }
+
+        // Inventory Management
         function renderInventoryTable() {
-            const searchQuery = document.getElementById('inv-search').value.toLowerCase();
+            const query = document.getElementById('inv-search').value.toLowerCase();
             const tbody = document.getElementById('inventory-table-body');
+            const filtered = inventory.filter(i => i.name.toLowerCase().includes(query) || i.batchCode.toLowerCase().includes(query));
 
-            const filteredInventory = inventory.filter(item => 
-                item.name.toLowerCase().includes(searchQuery) ||
-                item.batchCode.toLowerCase().includes(searchQuery) ||
-                item.barcode.includes(searchQuery)
-            );
-
-            tbody.innerHTML = filteredInventory.map(item => {
-                let badgeClass = 'bg-emerald-100 text-emerald-800';
-                let badgeText = 'In Stock';
-                if (item.stock === 0) {
-                    badgeClass = 'bg-red-100 text-red-800';
-                    badgeText = 'Out of Stock';
-                } else if (item.stock <= 15) {
-                    badgeClass = 'bg-amber-100 text-amber-800';
-                    badgeText = 'Low Stock';
-                }
-
-                return `
-                    <tr class="hover:bg-slate-50">
-                        <td class="py-3 px-3 font-mono text-xs text-slate-600">${item.barcode}</td>
-                        <td class="py-3 px-3 font-semibold text-slate-800">${item.batchCode}</td>
-                        <td class="py-3 px-3">${item.name}</td>
-                        <td class="py-3 px-3 text-right">${item.price.toFixed(2)}</td>
-                        <td class="py-3 px-3 text-center font-bold">${item.stock}</td>
-                        <td class="py-3 px-3 text-center">
-                            <span class="${badgeClass} text-xs font-semibold px-2 py-0.5 rounded-full">${badgeText}</span>
-                        </td>
-                        <td class="py-3 px-3 text-center space-x-1">
-                            <button onclick="restockPrompt('${item.barcode}')" class="text-xs bg-slate-100 hover:bg-emerald-100 text-emerald-700 font-semibold px-2 py-1 rounded transition"> Restock</button>
-                            <button onclick="editProduct('${item.barcode}')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2 py-1 rounded transition">Edit</button>
-                            <button onclick="deleteProduct('${item.barcode}')" class="text-xs bg-slate-100 hover:bg-red-100 text-red-600 font-semibold px-2 py-1 rounded transition">Delete</button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
+            tbody.innerHTML = filtered.map(item => `
+                <tr class="hover:bg-slate-50">
+                    <td class="py-3 px-3 font-mono text-xs">${item.barcode}</td>
+                    <td class="py-3 px-3 font-semibold">${item.batchCode}</td>
+                    <td class="py-3 px-3">${item.name}</td>
+                    <td class="py-3 px-3 text-right">${item.price.toFixed(2)}</td>
+                    <td class="py-3 px-3 text-center font-bold">${item.stock}</td>
+                    <td class="py-3 px-3 text-center">
+                        <span class="${item.stock > 10 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'} text-xs font-semibold px-2 py-0.5 rounded-full">
+                            ${item.stock > 10 ? 'In Stock' : 'Low Stock'}
+                        </span>
+                    </td>
+                    <td class="py-3 px-3 text-center space-x-1">
+                        <button onclick="editProduct('${item.barcode}')" class="text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded">Edit</button>
+                        <button onclick="deleteProduct('${item.barcode}')" class="text-xs bg-slate-100 hover:bg-red-100 text-red-600 px-2 py-1 rounded">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
         }
 
         function saveProduct(e) {
@@ -521,20 +720,13 @@
             const stock = parseInt(document.getElementById('inv-stock').value);
 
             if (editingBarcode) {
-                // Update Existing
-                const index = inventory.findIndex(p => p.barcode === editingBarcode);
-                if (index > -1) {
-                    inventory[index] = { barcode, batchCode, name, price, stock };
-                }
+                const idx = inventory.findIndex(p => p.barcode === editingBarcode);
+                if (idx > -1) inventory[idx] = { barcode, batchCode, name, price, stock };
             } else {
-                // Check if Barcode or Batch Code Exists
-                if (inventory.some(p => p.barcode === barcode)) {
-                    alert(`Product with Barcode "${barcode}" already exists!`);
-                    return;
-                }
                 inventory.push({ barcode, batchCode, name, price, stock });
             }
 
+            saveData();
             resetInventoryForm();
             renderInventoryTable();
             populateProductDropdown();
@@ -543,245 +735,172 @@
         function editProduct(barcode) {
             const product = inventory.find(p => p.barcode === barcode);
             if (!product) return;
-
             document.getElementById('editing-barcode').value = product.barcode;
             document.getElementById('inv-barcode').value = product.barcode;
             document.getElementById('inv-batch').value = product.batchCode;
             document.getElementById('inv-name').value = product.name;
             document.getElementById('inv-price').value = product.price;
             document.getElementById('inv-stock').value = product.stock;
-
             document.getElementById('inv-form-title').textContent = 'Edit Product';
-            document.getElementById('inv-submit-btn').textContent = 'Update Product';
             document.getElementById('cancel-edit-btn').classList.remove('hidden');
         }
 
+        function deleteProduct(barcode) {
+            if (confirm(`Delete product ${barcode}?`)) {
+                inventory = inventory.filter(p => p.barcode !== barcode);
+                saveData();
+                renderInventoryTable();
+                populateProductDropdown();
+            }
+        }
+
         function resetInventoryForm() {
-            document.getElementById('editing-barcode').value = '';
             document.getElementById('inventory-form').reset();
+            document.getElementById('editing-barcode').value = '';
             document.getElementById('inv-form-title').textContent = 'Add New Product';
-            document.getElementById('inv-submit-btn').textContent = 'Save Product';
             document.getElementById('cancel-edit-btn').classList.add('hidden');
         }
 
-        function restockPrompt(barcode) {
-            const product = inventory.find(p => p.barcode === barcode);
-            if (!product) return;
-
-            const addQtyStr = prompt(`Add restock quantity for "${product.name}" (Current stock: ${product.stock}):`, "50");
-            const addQty = parseInt(addQtyStr);
-
-            if (!isNaN(addQty) && addQty > 0) {
-                product.stock += addQty;
-                renderInventoryTable();
-                populateProductDropdown();
-            }
-        }
-
-        function deleteProduct(barcode) {
-            if (confirm(`Are you sure you want to delete product "${barcode}"?`)) {
-                inventory = inventory.filter(p => p.barcode !== barcode);
-                renderInventoryTable();
-                populateProductDropdown();
-            }
-        }
-
-        // 6. Payment Modal & Checkout Flow
-        function openCheckoutModal() {
-            if (cart.length === 0) {
-                alert("Your cart is empty!");
-                return;
-            }
-
-            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-            document.getElementById('modal-pay-amount').textContent = `ZMW ${total.toFixed(2)}`;
-            document.getElementById('payment-modal').classList.remove('hidden');
-        }
-
-        function closeCheckoutModal() {
-            document.getElementById('payment-modal').classList.add('hidden');
-        }
-
-        function toggleModalRefInput() {
-            const selectedOption = document.querySelector('input[name="payment-option"]:checked').value;
-            const refContainer = document.getElementById('modal-ref-container');
-            if (selectedOption === 'Cash') {
-                refContainer.classList.add('hidden');
-            } else {
-                refContainer.classList.remove('hidden');
-            }
-        }
-
-        function confirmCheckoutPayment() {
-            const selectedMethod = document.querySelector('input[name="payment-option"]:checked').value;
-            const refInput = document.getElementById('modal-ref-input').value.trim();
-
-            if (selectedMethod !== 'Cash' && !refInput) {
-                alert(`Please enter a phone number or reference for ${selectedMethod}`);
-                return;
-            }
-
-            const today = new Date().toISOString().split('T')[0];
-
-            cart.forEach(cartItem => {
-                const prod = inventory.find(p => p.barcode === cartItem.barcode);
-                if (prod) prod.stock -= cartItem.qty;
-
-                salesHistory.push({
-                    barcode: cartItem.barcode,
-                    batchCode: cartItem.batchCode,
-                    name: cartItem.name,
-                    qty: cartItem.qty,
-                    price: cartItem.price,
-                    total: cartItem.price * cartItem.qty,
-                    method: selectedMethod,
-                    date: today
-                });
-            });
-
-            alert(`Payment of ZMW ${cart.reduce((sum, item) => sum + (item.price * item.qty), 0).toFixed(2)} completed via ${selectedMethod}!`);
-            
-            cart = [];
-            document.getElementById('modal-ref-input').value = '';
-            closeCheckoutModal();
-            renderCart();
-            populateProductDropdown();
-        }
-
-        // 7. Reports & Analytics Functions
+        // Daily Reports & Analytics
         function renderDailyReports() {
             const today = new Date().toISOString().split('T')[0];
-            document.getElementById('report-date-display').textContent = `Date: ${today}`;
+            document.getElementById('report-date-display').textContent = today;
+            document.getElementById('report-location-display').textContent = currentUser.location;
 
-            const todaySales = salesHistory.filter(s => s.date === today);
             const tbody = document.getElementById('daily-report-table-body');
-            let totalRev = 0;
+            let total = 0;
 
-            tbody.innerHTML = todaySales.map(sale => {
-                totalRev += sale.total;
+            tbody.innerHTML = salesHistory.map(item => {
+                total += item.total;
                 return `
                     <tr class="hover:bg-slate-50">
-                        <td class="py-3 px-4 font-mono text-xs text-slate-500">${sale.barcode}</td>
-                        <td class="py-3 px-4 font-semibold text-slate-800">${sale.batchCode}</td>
-                        <td class="py-3 px-4">${sale.name}</td>
-                        <td class="py-3 px-4 text-center">${sale.qty}</td>
-                        <td class="py-3 px-4"><span class="bg-slate-100 text-slate-700 text-xs font-semibold px-2 py-1 rounded">${sale.method}</span></td>
-                        <td class="py-3 px-4 text-right">${sale.total.toFixed(2)}</td>
+                        <td class="py-3 px-4 font-semibold text-slate-700">${item.location || 'Lusaka Central'}</td>
+                        <td class="py-3 px-4 font-mono text-xs text-slate-600">${item.barcode} (${item.batchCode})</td>
+                        <td class="py-3 px-4">${item.name}</td>
+                        <td class="py-3 px-4 text-center font-bold">${item.qty}</td>
+                        <td class="py-3 px-4"><span class="bg-slate-100 text-xs px-2 py-1 rounded">${item.method}</span></td>
+                        <td class="py-3 px-4 text-right font-medium">${item.total.toFixed(2)}</td>
                     </tr>
                 `;
             }).join('');
 
-            document.getElementById('daily-report-total').textContent = `ZMW ${totalRev.toFixed(2)}`;
+            document.getElementById('daily-report-total').textContent = `ZMW ${total.toFixed(2)}`;
         }
 
         function renderAnalytics() {
             const tbody = document.getElementById('analytics-table-body');
-            
-            const performance = inventory.map(item => {
-                const itemSales = salesHistory.filter(s => s.barcode === item.barcode);
-                const totalUnits = itemSales.reduce((sum, s) => sum + s.qty, 0);
-                const totalRevenue = itemSales.reduce((sum, s) => sum + s.total, 0);
-                return {
-                    barcode: item.barcode,
-                    batchCode: item.batchCode,
-                    name: item.name,
-                    unitsSold: totalUnits,
-                    currentStock: item.stock,
-                    revenue: totalRevenue
-                };
-            }).sort((a, b) => b.revenue - a.revenue);
+            const analyticsData = inventory.map(item => {
+                const totalSold = salesHistory.filter(s => s.barcode === item.barcode).reduce((sum, s) => sum + s.qty, 0);
+                const totalRevenue = salesHistory.filter(s => s.barcode === item.barcode).reduce((sum, s) => sum + s.total, 0);
+                return { ...item, totalSold, totalRevenue };
+            });
 
-            tbody.innerHTML = performance.map(p => `
+            tbody.innerHTML = analyticsData.map(item => `
                 <tr class="hover:bg-slate-50">
-                    <td class="py-2 px-4">
-                        <svg id="barcode-svg-${p.barcode}" class="h-10"></svg>
-                    </td>
-                    <td class="py-3 px-4 font-mono text-xs font-semibold text-slate-600">${p.barcode}</td>
-                    <td class="py-3 px-4 font-semibold text-slate-800">${p.batchCode}</td>
-                    <td class="py-3 px-4">${p.name}</td>
-                    <td class="py-3 px-4 text-center font-medium">${p.unitsSold}</td>
-                    <td class="py-3 px-4 text-center">${p.currentStock}</td>
-                    <td class="py-3 px-4 text-right font-bold text-emerald-700">${p.revenue.toFixed(2)}</td>
+                    <td class="py-3 px-4 font-mono text-xs">${item.barcode}</td>
+                    <td class="py-3 px-4 font-semibold">${item.batchCode}</td>
+                    <td class="py-3 px-4">${item.name}</td>
+                    <td class="py-3 px-4 text-center font-bold">${item.totalSold}</td>
+                    <td class="py-3 px-4 text-center">${item.stock}</td>
+                    <td class="py-3 px-4 text-right font-bold text-emerald-700">${item.totalRevenue.toFixed(2)}</td>
                 </tr>
             `).join('');
 
-            performance.forEach(p => {
-                JsBarcode(`#barcode-svg-${p.barcode}`, p.barcode, {
-                    format: "CODE128",
-                    height: 30,
-                    width: 1.2,
-                    displayValue: false
-                });
-            });
-
-            renderCharts(performance);
-        }
-
-        function renderCharts(data) {
-            const labels = data.map(d => `${d.name} (${d.batchCode})`);
-            const revenues = data.map(d => d.revenue);
-            const unitsSold = data.map(d => d.unitsSold);
-            const stockLevels = data.map(d => d.currentStock);
+            const labels = analyticsData.map(a => a.name);
+            const revenues = analyticsData.map(a => a.totalRevenue);
+            const unitsSold = analyticsData.map(a => a.totalSold);
+            const currentStock = analyticsData.map(a => a.stock);
 
             if (revenueChartInstance) revenueChartInstance.destroy();
             if (stockChartInstance) stockChartInstance.destroy();
 
-            const ctx1 = document.getElementById('revenueChart').getContext('2d');
-            revenueChartInstance = new Chart(ctx1, {
+            revenueChartInstance = new Chart(document.getElementById('revenueChart'), {
                 type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Revenue (ZMW)',
-                        data: revenues,
-                        backgroundColor: '#059669',
-                        borderRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } }
-                }
+                data: { labels, datasets: [{ label: 'Revenue (ZMW)', data: revenues, backgroundColor: '#059669' }] },
+                options: { responsive: true, maintainAspectRatio: false }
             });
 
-            const ctx2 = document.getElementById('stockChart').getContext('2d');
-            stockChartInstance = new Chart(ctx2, {
+            stockChartInstance = new Chart(document.getElementById('stockChart'), {
                 type: 'bar',
                 data: {
-                    labels: labels,
+                    labels,
                     datasets: [
-                        {
-                            label: 'Units Sold',
-                            data: unitsSold,
-                            backgroundColor: '#0284c7',
-                            borderRadius: 6
-                        },
-                        {
-                            label: 'Current Stock',
-                            data: stockLevels,
-                            backgroundColor: '#cbd5e1',
-                            borderRadius: 6
-                        }
+                        { label: 'Units Sold', data: unitsSold, backgroundColor: '#3b82f6' },
+                        { label: 'Stock', data: currentStock, backgroundColor: '#cbd5e1' }
                     ]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                }
+                options: { responsive: true, maintainAspectRatio: false }
             });
         }
 
-        // Helper Functions
-        function printSection(elementId) {
-            window.print();
+        // ADMIN USER MANAGEMENT LOGIC
+        function renderUsersTable() {
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = users.map((u, idx) => `
+                <tr class="hover:bg-slate-50">
+                    <td class="py-3 px-3 font-bold text-slate-800">${u.username}</td>
+                    <td class="py-3 px-3"><span class="uppercase text-xs font-bold px-2 py-0.5 rounded ${u.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}">${u.role}</span></td>
+                    <td class="py-3 px-3 font-medium text-slate-600">${u.location || 'N/A'}</td>
+                    <td class="py-3 px-3 text-center">
+                        <span class="text-xs font-bold px-2.5 py-0.5 rounded-full ${u.status === 'Active' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">${u.status}</span>
+                    </td>
+                    <td class="py-3 px-3 text-center space-x-1">
+                        <button onclick="toggleUserStatus(${idx})" class="text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded font-semibold">${u.status === 'Active' ? 'Suspend' : 'Activate'}</button>
+                        <button onclick="resetUserPassword('${u.username}')" class="text-xs bg-slate-100 hover:bg-amber-100 text-amber-800 px-2 py-1 rounded font-semibold">Reset Password</button>
+                        <button onclick="deleteUser('${u.username}')" class="text-xs bg-slate-100 hover:bg-red-100 text-red-600 px-2 py-1 rounded font-semibold">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
         }
 
-        // Application Startup
-        window.onload = () => {
-            populateProductDropdown();
-            renderCart();
-        };
+        function handleAddUser(e) {
+            e.preventDefault();
+            const username = document.getElementById('user-new-name').value.trim();
+            const password = document.getElementById('user-new-pass').value;
+            const role = document.getElementById('user-new-role').value;
+            const location = document.getElementById('user-new-location').value;
+
+            if (users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
+                alert(`User "${username}" already exists!`);
+                return;
+            }
+
+            users.push({ username, password, role, location, status: 'Active' });
+            saveData();
+            document.getElementById('add-user-form').reset();
+            renderUsersTable();
+            alert(`User account "${username}" created!`);
+        }
+
+        function toggleUserStatus(index) {
+            if (users[index].username === currentUser.username) return alert("You cannot suspend your own logged-in account!");
+            users[index].status = users[index].status === 'Active' ? 'Suspended' : 'Active';
+            saveData();
+            renderUsersTable();
+        }
+
+        function resetUserPassword(username) {
+            const newPass = prompt(`Enter new password for ${username}:`);
+            if (newPass) {
+                const user = users.find(u => u.username === username);
+                if (user) {
+                    user.password = newPass;
+                    saveData();
+                    alert(`Password for ${username} updated successfully!`);
+                }
+            }
+        }
+
+        function deleteUser(username) {
+            if (username === currentUser.username) return alert("You cannot delete your own account!");
+            if (confirm(`Are you sure you want to delete user "${username}"?`)) {
+                users = users.filter(u => u.username !== username);
+                saveData();
+                renderUsersTable();
+            }
+        }
+
+        function printSection(id) { window.print(); }
     </script>
 </body>
 </html>
