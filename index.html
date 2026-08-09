@@ -92,7 +92,7 @@
                     <button onclick="switchTab('checkout')" id="tab-checkout" class="tab-btn px-3 py-2 text-sm font-medium rounded-md bg-emerald-600 text-white transition">POS Checkout</button>
                     <button onclick="switchTab('inventory')" id="tab-inventory" class="tab-btn px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:text-white transition">Inventory</button>
                     <button onclick="switchTab('daily-reports')" id="tab-daily-reports" class="tab-btn px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:text-white transition">Daily Reports</button>
-                    <button onclick="switchTab('analytics')" id="tab-analytics" class="tab-btn px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:text-white transition">Analytics</button>
+                    <button onclick="switchTab('analytics')" id="tab-analytics" class="tab-btn px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:text-white transition">Performance & Analytics</button>
                     <button onclick="switchTab('users')" id="tab-users" class="tab-btn px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:text-white transition">User Management</button>
                 </nav>
 
@@ -348,10 +348,10 @@
                         <div>
                             <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Default Operating Location</label>
                             <select id="user-new-location" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
-                                <option value="Lusaka Central">Lusaka Central</option>
+                                <option value="Lusaka Petauke Branch">Petauke Branch</option>
                                 <option value="Katete Branch">Katete Branch</option>
                                 <option value="Chadiza Branch">Chadiza Branch</option>
-                                <option value="Kitwe Branch">Kitwe Branch</option>
+                                <option value="Chanida Branch">Chanida Branch</option>
                                 <option value="Chipata Branch">Chipata Branch</option>
                             </select>
                         </div>
@@ -429,9 +429,10 @@
     <script>
         // Default System Seed Data
         const defaultUsers = [
-            { username: 'admin', password: '123', role: 'admin', location: 'Lusaka Central', status: 'Active' },
-            { username: 'cashier1', password: '123', role: 'cashier', location: 'Katete Branch', status: 'Active' },
-            { username: 'chadiza_cashier', password: '123', role: 'cashier', location: 'Chadiza Branch', status: 'Active' }
+            { username: 'admin', password: '123', role: 'admin', location: 'Petauke Branch', status: 'Active' },
+            { username: 'Katete_Cashier', password: '123', role: 'cashier', location: 'Katete Branch', status: 'Active' },
+            { username: 'chadiza_Cashier', password: '123', role: 'cashier', location: 'Chadiza Branch', status: 'Active' }
+            { username: 'Chanida_Cashier', password: '123', role: 'cashier', location: 'Chanida Branch', status: 'Active' }
         ];
 
         const defaultInventory = [
