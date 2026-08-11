@@ -60,7 +60,7 @@
             <div class="mt-6 pt-4 border-t border-slate-100 text-center">
                 <p class="text-xs text-slate-400 mb-2 uppercase font-semibold">Quick Demo Login Shortcuts</p>
                 <div class="flex gap-2 justify-center">
-                    <button onclick="quickLogin('cashier1')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-3 py-1.5 rounded-md transition">
+                    <button onclick="quickLogin('Katete_Cashier')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-3 py-1.5 rounded-md transition">
                         🔑 Cashier Demo
                     </button>
                     <button onclick="quickLogin('admin')" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-medium px-3 py-1.5 rounded-md transition">
@@ -348,7 +348,7 @@
                         <div>
                             <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Default Operating Location</label>
                             <select id="user-new-location" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
-                                <option value="Lusaka Petauke Branch">Petauke Branch</option>
+                                <option value="Petauke Branch">Petauke Branch</option>
                                 <option value="Katete Branch">Katete Branch</option>
                                 <option value="Chadiza Branch">Chadiza Branch</option>
                                 <option value="Chanida Branch">Chanida Branch</option>
@@ -431,7 +431,8 @@
         const defaultUsers = [
             { username: 'admin', password: '123', role: 'admin', location: 'Petauke Branch', status: 'Active' },
             { username: 'Katete_Cashier', password: '123', role: 'cashier', location: 'Katete Branch', status: 'Active' },
-            { username: 'chadiza_Cashier', password: '123', role: 'cashier', location: 'Chadiza Branch', status: 'Active' }
+            { username: 'chadiza_Cashier', password: '123', role: 'cashier', location: 'Chadiza Branch', status: 'Active' },
+            { username: 'Petauke_Cashier', password: '123', role: 'cashier', location: 'Petauke Branch', status: 'Active' }
         ];
 
         const defaultInventory = [
@@ -489,7 +490,7 @@
             if (user) {
                 document.getElementById('login-username').value = user.username;
                 document.getElementById('login-password').value = user.password;
-                document.getElementById('login-location').value = user.location || 'Lusaka Central';
+                document.getElementById('login-location').value = user.location || 'Petauke Branch';
                 document.getElementById('login-form').dispatchEvent(new Event('submit'));
             }
         }
@@ -513,11 +514,11 @@
             const tabUsers = document.getElementById('tab-users');
 
             if (currentUser.role === 'cashier') {
-                tabInv.classList.add('hidden');
+                tabInv.classList.add('show');
                 tabAnalytics.classList.add('hidden');
                 tabUsers.classList.add('hidden');
             } else {
-                tabInv.classList.remove('hidden');
+                // tabInv.classList.remove('hidden');
                 tabAnalytics.classList.remove('hidden');
                 tabUsers.classList.remove('hidden');
             }
@@ -527,7 +528,7 @@
         }
 
         function switchTab(tabId) {
-            if (currentUser.role === 'cashier' && (tabId === 'inventory' || tabId === 'analytics' || tabId === 'users')) {
+            if (currentUser.role === 'cashier' && (tabId === 'analytics' || tabId === 'users')) {
                 alert('Access Restricted');
                 return;
             }
@@ -698,8 +699,8 @@
                     <td class="py-3 px-3 text-right">${item.price.toFixed(2)}</td>
                     <td class="py-3 px-3 text-center font-bold">${item.stock}</td>
                     <td class="py-3 px-3 text-center">
-                        <span class="${item.stock > 10 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'} text-xs font-semibold px-2 py-0.5 rounded-full">
-                            ${item.stock > 10 ? 'In Stock' : 'Low Stock'}
+                        <span class="${item.stock > 4 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'} text-xs font-semibold px-2 py-0.5 rounded-full">
+                            ${item.stock > 4 ? 'In Stock' : 'Low Stock'}
                         </span>
                     </td>
                     <td class="py-3 px-3 text-center space-x-1">
