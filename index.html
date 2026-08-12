@@ -34,10 +34,10 @@
                 <div>
                     <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Operating Location / Branch</label>
                     <select id="login-location" class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white font-medium" required>
-                        <option value="Petauke Branch">Petauke Branch</option>
+                        <option value="Lusaka">Lusaka</option>
                         <option value="Katete Branch">Katete Branch</option>
                         <option value="Chadiza Branch">Chadiza Branch</option>
-                        <option value="Chanida Branch">Chanida Branch</option>
+                        <option value="Kitwe Branch">Kitwe Branch</option>
                         <option value="Chipata Branch">Chipata Branch</option>
                     </select>
                 </div>
@@ -60,7 +60,7 @@
             <div class="mt-6 pt-4 border-t border-slate-100 text-center">
                 <p class="text-xs text-slate-400 mb-2 uppercase font-semibold">Quick Demo Login Shortcuts</p>
                 <div class="flex gap-2 justify-center">
-                    <button onclick="quickLogin('Katete_Cashier')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-3 py-1.5 rounded-md transition">
+                    <button onclick="quickLogin('katete_cashier')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-3 py-1.5 rounded-md transition">
                         🔑 Cashier Demo
                     </button>
                     <button onclick="quickLogin('admin')" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-medium px-3 py-1.5 rounded-md transition">
@@ -82,7 +82,7 @@
                     <div>
                         <h1 class="text-lg font-bold tracking-wide leading-tight">Pharmacy Management</h1>
                         <p class="text-xs text-emerald-400 font-medium flex items-center gap-1">
-                            <span>📍 Location:</span> <span id="header-location-name" class="font-bold underline">Lusaka Central</span>
+                            <span>📍 Location:</span> <span id="header-location-name" class="font-bold underline">Lusaka</span>
                         </p>
                     </div>
                 </div>
@@ -92,8 +92,8 @@
                     <button onclick="switchTab('checkout')" id="tab-checkout" class="tab-btn px-3 py-2 text-sm font-medium rounded-md bg-emerald-600 text-white transition">POS Checkout</button>
                     <button onclick="switchTab('inventory')" id="tab-inventory" class="tab-btn px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:text-white transition">Inventory</button>
                     <button onclick="switchTab('daily-reports')" id="tab-daily-reports" class="tab-btn px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:text-white transition">Daily Reports</button>
-                    <button onclick="switchTab('analytics')" id="tab-analytics" class="tab-btn px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:text-white transition">Performance & Analytics</button>
-                    <button onclick="switchTab('users')" id="tab-users" class="tab-btn px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:text-white transition">User Management</button>
+                    <button onclick="switchTab('analytics')" id="tab-analytics" class="tab-btn px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:text-white transition">Analytics (Admin)</button>
+                    <button onclick="switchTab('users')" id="tab-users" class="tab-btn px-3 py-2 text-sm font-medium rounded-md text-slate-300 hover:text-white transition">User Mgmt (Admin)</button>
                 </nav>
 
                 <!-- Active User Badge & Logout -->
@@ -180,7 +180,8 @@
 
             <!-- ================= SECTION 2: INVENTORY MANAGEMENT ================= -->
             <section id="section-inventory" class="tab-content hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-1 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <!-- Add/Edit Product Form (Hidden for Cashiers) -->
+                <div id="inv-form-container" class="lg:col-span-1 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
                     <div class="flex justify-between items-center border-b pb-2 mb-4">
                         <h2 id="inv-form-title" class="text-lg font-bold text-slate-900">Add New Product</h2>
                         <button id="cancel-edit-btn" onclick="resetInventoryForm()" class="hidden text-xs text-red-600 hover:underline">Cancel Edit</button>
@@ -216,9 +217,13 @@
                     </form>
                 </div>
 
-                <div class="lg:col-span-2 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <!-- Stock Directory Table -->
+                <div id="inv-table-container" class="lg:col-span-2 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-4 mb-4 gap-3">
-                        <h2 class="text-lg font-bold text-slate-900">Stock Directory</h2>
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Stock Directory</h2>
+                            <p id="inv-view-notice" class="text-xs text-slate-500 hidden">Read-only view mode enabled for cashiers.</p>
+                        </div>
                         <input type="text" id="inv-search" oninput="renderInventoryTable()" placeholder="Search product or batch..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none w-full sm:w-64">
                     </div>
 
@@ -232,7 +237,7 @@
                                     <th class="py-3 px-3 text-right">Price (ZMW)</th>
                                     <th class="py-3 px-3 text-center">Stock</th>
                                     <th class="py-3 px-3 text-center">Status</th>
-                                    <th class="py-3 px-3 text-center">Actions</th>
+                                    <th id="inv-actions-header" class="py-3 px-3 text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="inventory-table-body" class="divide-y divide-slate-200"></tbody>
@@ -249,13 +254,44 @@
                             <h1 class="text-2xl font-bold text-slate-900">Care Class Pharmacy</h1>
                             <h2 class="text-xl font-bold text-slate-700">Daily Sales Report</h2>
                             <p class="text-sm text-slate-500">
-                                Location: <span id="report-location-display" class="font-bold text-slate-800">All Locations</span> | 
                                 Date: <span id="report-date-display"></span>
                             </p>
                         </div>
-                        <button onclick="printSection('daily-report-print-area')" class="no-print bg-slate-900 hover:bg-slate-800 text-white font-medium px-4 py-2 rounded-lg text-sm transition flex items-center gap-2">
-                            <span>🖨️</span> Print Daily Report
-                        </button>
+
+                        <div class="flex flex-wrap items-center gap-3 no-print">
+                            <!-- Location Filter -->
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Report Location</label>
+                                <select id="report-location-filter" onchange="renderDailyReports()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
+                                    <option value="All">All Locations (Combined)</option>
+                                    <option value="Lusaka">Lusaka</option>
+                                    <option value="Katete Branch">Katete Branch</option>
+                                    <option value="Chadiza Branch">Chadiza Branch</option>
+                                    <option value="Kitwe Branch">Kitwe Branch</option>
+                                    <option value="Chipata Branch">Chipata Branch</option>
+                                </select>
+                            </div>
+
+                            <button onclick="printSection('daily-report-print-area')" class="bg-slate-900 hover:bg-slate-800 text-white font-medium px-4 py-2 rounded-lg text-sm transition flex items-center gap-2 mt-4 sm:mt-0">
+                                <span>🖨️</span> Print Daily Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Summary Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <span class="text-xs font-bold text-slate-500 uppercase">Selected Branch</span>
+                            <h3 id="report-branch-heading" class="text-lg font-bold text-slate-900">All Locations</h3>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <span class="text-xs font-bold text-slate-500 uppercase">Total Sales Transactions</span>
+                            <h3 id="report-trans-count" class="text-lg font-bold text-slate-900">0</h3>
+                        </div>
+                        <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200">
+                            <span class="text-xs font-bold text-emerald-800 uppercase">Branch Revenue Total</span>
+                            <h3 id="daily-report-total-card" class="text-2xl font-black text-emerald-700">ZMW 0.00</h3>
+                        </div>
                     </div>
 
                     <div class="overflow-x-auto">
@@ -274,7 +310,7 @@
                             <tfoot class="bg-slate-50 font-bold border-t-2 border-slate-300">
                                 <tr>
                                     <td colspan="5" class="py-3 px-4 text-right">Total Revenue:</td>
-                                    <td id="daily-report-total" class="py-3 px-4 text-right text-emerald-700">ZMW 0.00</td>
+                                    <td id="daily-report-total" class="py-3 px-4 text-right text-emerald-700 font-extrabold">ZMW 0.00</td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -282,17 +318,30 @@
                 </div>
             </section>
 
-            <!-- ================= SECTION 4: PERFORMANCE & ANALYTICS ================= -->
+            <!-- ================= SECTION 4: PERFORMANCE & ANALYTICS (ADMIN ONLY) ================= -->
             <section id="section-analytics" class="tab-content hidden space-y-6">
                 <div id="analytics-print-area" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 printable-area">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 pb-4 border-b gap-4">
                         <div>
                             <h1 class="text-2xl font-bold text-slate-900">Care Class Pharmacy</h1>
-                            <h2 class="text-xl font-bold text-slate-700">Product Performance & Analytics</h2>
+                            <h2 class="text-xl font-bold text-slate-700">Product Performance & Independent Branch Analytics</h2>
                         </div>
-                        <button onclick="printSection('analytics-print-area')" class="no-print bg-slate-900 hover:bg-slate-800 text-white font-medium px-4 py-2 rounded-lg text-sm transition">
-                            🖨️ Print Report
-                        </button>
+                        <div class="flex items-center gap-3 no-print">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Filter Analytics Branch</label>
+                                <select id="analytics-location-filter" onchange="renderAnalytics()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
+                                    <option value="All">All Locations (Combined)</option>
+                                    <option value="Lusaka">Lusaka</option>
+                                    <option value="Katete Branch">Katete Branch</option>
+                                    <option value="Chadiza Branch">Chadiza Branch</option>
+                                    <option value="Kitwe Branch">Kitwe Branch</option>
+                                    <option value="Chipata Branch">Chipata Branch</option>
+                                </select>
+                            </div>
+                            <button onclick="printSection('analytics-print-area')" class="bg-slate-900 hover:bg-slate-800 text-white font-medium px-4 py-2 rounded-lg text-sm transition mt-4 sm:mt-0">
+                                🖨️ Print Report
+                            </button>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -341,17 +390,17 @@
                         <div>
                             <label class="block text-xs font-bold text-slate-600 uppercase mb-1">System Role</label>
                             <select id="user-new-role" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
-                                <option value="cashier">Cashier (POS & Daily Reports Only)</option>
+                                <option value="cashier">Cashier (POS Checkout & Read-Only Inventory)</option>
                                 <option value="admin">Administrator / Manager (Full Access)</option>
                             </select>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Default Operating Location</label>
                             <select id="user-new-location" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
-                                <option value="Petauke Branch">Petauke Branch</option>
+                                <option value="Lusaka">Lusaka</option>
                                 <option value="Katete Branch">Katete Branch</option>
                                 <option value="Chadiza Branch">Chadiza Branch</option>
-                                <option value="Chanida Branch">Chanida Branch</option>
+                                <option value="Kitwe Branch">Kitwe Branch</option>
                                 <option value="Chipata Branch">Chipata Branch</option>
                             </select>
                         </div>
@@ -427,21 +476,21 @@
 
     <!-- JavaScript Application Logic -->
     <script>
-        // Default System Seed Data
+        // Seed Users
         const defaultUsers = [
-            { username: 'admin', password: '123', role: 'admin', location: 'Petauke Branch', status: 'Active' },
-            { username: 'Katete_Cashier', password: '123', role: 'cashier', location: 'Katete Branch', status: 'Active' },
-            { username: 'chadiza_Cashier', password: '123', role: 'cashier', location: 'Chadiza Branch', status: 'Active' },
-            { username: 'Petauke_Cashier', password: '123', role: 'cashier', location: 'Petauke Branch', status: 'Active' }
+            { username: 'admin', password: '123', role: 'admin', location: 'Lusaka', status: 'Active' },
+            { username: 'katete_cashier', password: '123', role: 'cashier', location: 'Katete Branch', status: 'Active' },
+            { username: 'chadiza_cashier', password: '123', role: 'cashier', location: 'Chadiza Branch', status: 'Active' }
         ];
 
+        // Seed Inventory
         const defaultInventory = [
             { barcode: '600100200301', batchCode: 'BAT-2026-001', name: 'Paracetamol 500mg', price: 10.00, stock: 150 },
             { barcode: '600100200302', batchCode: 'BAT-2026-089', name: 'Amoxicillin 250mg', price: 30.00, stock: 45 },
             { barcode: '600100200303', batchCode: 'BAT-2026-102', name: 'Ibuprofen 400mg', price: 15.00, stock: 80 }
         ];
 
-        // State Variables loaded from LocalStorage
+        // Persistent State
         let users = JSON.parse(localStorage.getItem('careclass_users')) || defaultUsers;
         let inventory = JSON.parse(localStorage.getItem('careclass_inventory')) || defaultInventory;
         let salesHistory = JSON.parse(localStorage.getItem('careclass_sales')) || [];
@@ -458,7 +507,7 @@
             localStorage.setItem('careclass_sales', JSON.stringify(salesHistory));
         }
 
-        // Authentication & Location
+        // Authentication
         function handleLogin(e) {
             e.preventDefault();
             const usernameInput = document.getElementById('login-username').value.trim();
@@ -490,7 +539,7 @@
             if (user) {
                 document.getElementById('login-username').value = user.username;
                 document.getElementById('login-password').value = user.password;
-                document.getElementById('login-location').value = user.location || 'Petauke Branch';
+                document.getElementById('login-location').value = user.location || 'Lusaka';
                 document.getElementById('login-form').dispatchEvent(new Event('submit'));
             }
         }
@@ -507,20 +556,52 @@
             document.getElementById('app-content').classList.remove('hidden');
 
             document.getElementById('header-location-name').textContent = currentUser.location;
-            document.getElementById('user-display-name').textContent = `${currentUser.username} (${currentUser.role})`;
+            document.getElementById('user-display-name').textContent = `${currentUser.username} (${currentUser.role.toUpperCase()})`;
 
             const tabInv = document.getElementById('tab-inventory');
             const tabAnalytics = document.getElementById('tab-analytics');
             const tabUsers = document.getElementById('tab-users');
+            const reportLocFilter = document.getElementById('report-location-filter');
+            const analyticsLocFilter = document.getElementById('analytics-location-filter');
+
+            const invFormContainer = document.getElementById('inv-form-container');
+            const invTableContainer = document.getElementById('inv-table-container');
+            const invViewNotice = document.getElementById('inv-view-notice');
 
             if (currentUser.role === 'cashier') {
-                tabInv.classList.add('show');
+                // Allow inventory view, hide Analytics and User Mgmt
+                tabInv.classList.remove('hidden');
                 tabAnalytics.classList.add('hidden');
                 tabUsers.classList.add('hidden');
+
+                // Adjust inventory UI for read-only view
+                if (invFormContainer) invFormContainer.classList.add('hidden');
+                if (invTableContainer) {
+                    invTableContainer.classList.remove('lg:col-span-2');
+                    invTableContainer.classList.add('lg:col-span-3');
+                }
+                if (invViewNotice) invViewNotice.classList.remove('hidden');
+
+                // Lock cashier's daily report filter strictly to their logged-in location
+                reportLocFilter.value = currentUser.location;
+                reportLocFilter.disabled = true;
             } else {
-                // tabInv.classList.remove('hidden');
+                // ADMIN RIGHTS
+                tabInv.classList.remove('hidden');
                 tabAnalytics.classList.remove('hidden');
                 tabUsers.classList.remove('hidden');
+
+                if (invFormContainer) invFormContainer.classList.remove('hidden');
+                if (invTableContainer) {
+                    invTableContainer.classList.add('lg:col-span-2');
+                    invTableContainer.classList.remove('lg:col-span-3');
+                }
+                if (invViewNotice) invViewNotice.classList.add('hidden');
+
+                // Enable independent location selection for admin
+                reportLocFilter.disabled = false;
+                reportLocFilter.value = 'All';
+                analyticsLocFilter.value = 'All';
             }
 
             switchTab('checkout');
@@ -528,8 +609,9 @@
         }
 
         function switchTab(tabId) {
+            // CASHIER ACCESS GUARD (Analytics & User Mgmt strictly restricted)
             if (currentUser.role === 'cashier' && (tabId === 'analytics' || tabId === 'users')) {
-                alert('Access Restricted');
+                alert('Access Denied: Cashiers do not have permission to access this section.');
                 return;
             }
 
@@ -552,7 +634,7 @@
             if(tabId === 'users') renderUsersTable();
         }
 
-        // POS Logic
+        // POS Checkout Operations
         function populateProductDropdown() {
             const select = document.getElementById('product-select');
             select.innerHTML = inventory.map(i => 
@@ -569,7 +651,7 @@
                     addDirectToCart(product, 1);
                     e.target.value = '';
                 } else {
-                    alert(`Product not found: "${scannedCode}"`);
+                    alert(`Product not found for barcode/batch: "${scannedCode}"`);
                 }
             }
         }
@@ -620,7 +702,7 @@
                         <td class="py-3 px-3 text-center">${item.qty}</td>
                         <td class="py-3 px-3 text-right font-medium">${total.toFixed(2)}</td>
                         <td class="py-3 px-3 text-center">
-                            <button onclick="removeFromCart(${index})" class="text-red-500 font-bold">×</button>
+                            <button onclick="removeFromCart(${index})" class="text-red-500 font-bold hover:bg-red-50 px-2 py-0.5 rounded">×</button>
                         </td>
                     </tr>
                 `;
@@ -628,7 +710,7 @@
             document.getElementById('cart-grand-total').textContent = `ZMW ${grandTotal.toFixed(2)}`;
         }
 
-        // Payment Processing
+        // Checkout Payment Processing
         function openCheckoutModal() {
             if (cart.length === 0) return alert('Cart is empty!');
             const grandTotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
@@ -656,7 +738,7 @@
             const refInput = document.getElementById('modal-ref-input').value.trim();
             const todayDate = new Date().toISOString().split('T')[0];
 
-            if (option !== 'Cash' && !refInput) return alert(`Please enter details for ${option}`);
+            if (option !== 'Cash' && !refInput) return alert(`Please enter reference details for ${option}`);
 
             const fullMethod = option === 'Cash' ? 'Cash' : `${option} (${refInput})`;
 
@@ -682,14 +764,21 @@
             renderCart();
             populateProductDropdown();
             closeCheckoutModal();
-            alert('Payment recorded successfully!');
+            alert('Transaction completed successfully!');
         }
 
         // Inventory Management
         function renderInventoryTable() {
             const query = document.getElementById('inv-search').value.toLowerCase();
             const tbody = document.getElementById('inventory-table-body');
-            const filtered = inventory.filter(i => i.name.toLowerCase().includes(query) || i.batchCode.toLowerCase().includes(query));
+            const actionsHeader = document.getElementById('inv-actions-header');
+            const isCashier = currentUser.role === 'cashier';
+
+            if (actionsHeader) {
+                actionsHeader.style.display = isCashier ? 'none' : '';
+            }
+
+            const filtered = inventory.filter(i => i.name.toLowerCase().includes(query) || i.batchCode.toLowerCase().includes(query) || i.barcode.includes(query));
 
             tbody.innerHTML = filtered.map(item => `
                 <tr class="hover:bg-slate-50">
@@ -699,20 +788,23 @@
                     <td class="py-3 px-3 text-right">${item.price.toFixed(2)}</td>
                     <td class="py-3 px-3 text-center font-bold">${item.stock}</td>
                     <td class="py-3 px-3 text-center">
-                        <span class="${item.stock > 4 ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'} text-xs font-semibold px-2 py-0.5 rounded-full">
+                        <span class="${item.stock > 4 ? 'bg-emerald-100 text-emerald-800' : 'bg-orange-100 text-orange-800'} text-xs font-semibold px-2 py-0.5 rounded-full">
                             ${item.stock > 4 ? 'In Stock' : 'Low Stock'}
                         </span>
                     </td>
+                    ${isCashier ? '' : `
                     <td class="py-3 px-3 text-center space-x-1">
                         <button onclick="editProduct('${item.barcode}')" class="text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded">Edit</button>
                         <button onclick="deleteProduct('${item.barcode}')" class="text-xs bg-slate-100 hover:bg-red-100 text-red-600 px-2 py-1 rounded">Delete</button>
-                    </td>
+                    </td>`}
                 </tr>
             `).join('');
         }
 
         function saveProduct(e) {
             e.preventDefault();
+            if (currentUser.role === 'cashier') return alert("Permission denied: Cashiers cannot edit inventory.");
+
             const editingBarcode = document.getElementById('editing-barcode').value;
             const barcode = document.getElementById('inv-barcode').value.trim();
             const batchCode = document.getElementById('inv-batch').value.trim();
@@ -734,6 +826,7 @@
         }
 
         function editProduct(barcode) {
+            if (currentUser.role === 'cashier') return alert("Permission denied: Cashiers cannot edit inventory.");
             const product = inventory.find(p => p.barcode === barcode);
             if (!product) return;
             document.getElementById('editing-barcode').value = product.barcode;
@@ -747,6 +840,7 @@
         }
 
         function deleteProduct(barcode) {
+            if (currentUser.role === 'cashier') return alert("Permission denied: Cashiers cannot delete inventory.");
             if (confirm(`Delete product ${barcode}?`)) {
                 inventory = inventory.filter(p => p.barcode !== barcode);
                 saveData();
@@ -762,20 +856,24 @@
             document.getElementById('cancel-edit-btn').classList.add('hidden');
         }
 
-        // Daily Reports & Analytics
+        // Daily Reports with Location Filtering
         function renderDailyReports() {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('report-date-display').textContent = today;
-            document.getElementById('report-location-display').textContent = currentUser.location;
+
+            const selectedLocation = document.getElementById('report-location-filter').value;
+            document.getElementById('report-branch-heading').textContent = selectedLocation;
+
+            const filteredSales = salesHistory.filter(s => selectedLocation === 'All' || s.location === selectedLocation);
 
             const tbody = document.getElementById('daily-report-table-body');
             let total = 0;
 
-            tbody.innerHTML = salesHistory.map(item => {
+            tbody.innerHTML = filteredSales.map(item => {
                 total += item.total;
                 return `
                     <tr class="hover:bg-slate-50">
-                        <td class="py-3 px-4 font-semibold text-slate-700">${item.location || 'Lusaka Central'}</td>
+                        <td class="py-3 px-4 font-semibold text-slate-700">${item.location}</td>
                         <td class="py-3 px-4 font-mono text-xs text-slate-600">${item.barcode} (${item.batchCode})</td>
                         <td class="py-3 px-4">${item.name}</td>
                         <td class="py-3 px-4 text-center font-bold">${item.qty}</td>
@@ -785,14 +883,22 @@
                 `;
             }).join('');
 
+            document.getElementById('report-trans-count').textContent = filteredSales.length;
             document.getElementById('daily-report-total').textContent = `ZMW ${total.toFixed(2)}`;
+            document.getElementById('daily-report-total-card').textContent = `ZMW ${total.toFixed(2)}`;
         }
 
+        // Analytics with Independent Branch Filtering (ADMIN ONLY)
         function renderAnalytics() {
+            if (currentUser.role === 'cashier') return;
+
+            const selectedLocation = document.getElementById('analytics-location-filter').value;
+            const filteredSales = salesHistory.filter(s => selectedLocation === 'All' || s.location === selectedLocation);
+
             const tbody = document.getElementById('analytics-table-body');
             const analyticsData = inventory.map(item => {
-                const totalSold = salesHistory.filter(s => s.barcode === item.barcode).reduce((sum, s) => sum + s.qty, 0);
-                const totalRevenue = salesHistory.filter(s => s.barcode === item.barcode).reduce((sum, s) => sum + s.total, 0);
+                const totalSold = filteredSales.filter(s => s.barcode === item.barcode).reduce((sum, s) => sum + s.qty, 0);
+                const totalRevenue = filteredSales.filter(s => s.barcode === item.barcode).reduce((sum, s) => sum + s.total, 0);
                 return { ...item, totalSold, totalRevenue };
             });
 
@@ -817,7 +923,7 @@
 
             revenueChartInstance = new Chart(document.getElementById('revenueChart'), {
                 type: 'bar',
-                data: { labels, datasets: [{ label: 'Revenue (ZMW)', data: revenues, backgroundColor: '#059669' }] },
+                data: { labels, datasets: [{ label: `Revenue (ZMW) - ${selectedLocation}`, data: revenues, backgroundColor: '#059669' }] },
                 options: { responsive: true, maintainAspectRatio: false }
             });
 
@@ -834,8 +940,9 @@
             });
         }
 
-        // ADMIN USER MANAGEMENT LOGIC
+        // USER MANAGEMENT (ADMIN ONLY)
         function renderUsersTable() {
+            if (currentUser.role === 'cashier') return;
             const tbody = document.getElementById('users-table-body');
             tbody.innerHTML = users.map((u, idx) => `
                 <tr class="hover:bg-slate-50">
@@ -856,6 +963,7 @@
 
         function handleAddUser(e) {
             e.preventDefault();
+            if (currentUser.role === 'cashier') return alert("Permission denied!");
             const username = document.getElementById('user-new-name').value.trim();
             const password = document.getElementById('user-new-pass').value;
             const role = document.getElementById('user-new-role').value;
@@ -874,6 +982,7 @@
         }
 
         function toggleUserStatus(index) {
+            if (currentUser.role === 'cashier') return alert("Permission denied!");
             if (users[index].username === currentUser.username) return alert("You cannot suspend your own logged-in account!");
             users[index].status = users[index].status === 'Active' ? 'Suspended' : 'Active';
             saveData();
@@ -881,6 +990,7 @@
         }
 
         function resetUserPassword(username) {
+            if (currentUser.role === 'cashier') return alert("Permission denied!");
             const newPass = prompt(`Enter new password for ${username}:`);
             if (newPass) {
                 const user = users.find(u => u.username === username);
@@ -893,7 +1003,8 @@
         }
 
         function deleteUser(username) {
-            if (username === currentUser.username) return alert("You cannot delete your own account!");
+            if (currentUser.role === 'cashier') return alert("Permission denied!");
+            if (username === currentUser.username) return alert("You cannot delete your own logged-in account!");
             if (confirm(`Are you sure you want to delete user "${username}"?`)) {
                 users = users.filter(u => u.username !== username);
                 saveData();
