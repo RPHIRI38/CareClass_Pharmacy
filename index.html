@@ -534,15 +534,15 @@
             applyUserPermissions();
         }
 
-        // function quickLogin(username) {
-        //     const user = users.find(u => u.username === username);
-        //     if (user) {
-        //         document.getElementById('login-username').value = user.username;
-        //         document.getElementById('login-password').value = user.password;
-        //         document.getElementById('login-location').value = user.location || 'Lusaka';
-        //         document.getElementById('login-form').dispatchEvent(new Event('submit'));
-        //     }
-        // }
+         function quickLogin(username) {
+             const user = users.find(u => u.username === username);
+             if (user) {
+                 document.getElementById('login-username').value = user.username;
+                 document.getElementById('login-password').value = user.password;
+                 document.getElementById('login-location').value = user.location || 'Lusaka';
+                 document.getElementById('login-form').dispatchEvent(new Event('submit'));
+             }
+         }
 
         function handleLogout() {
             currentUser = null;
