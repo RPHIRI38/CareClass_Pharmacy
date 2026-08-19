@@ -57,7 +57,7 @@
                 </button>
             </form>
 
-             <!-- <div class="mt-6 pt-4 border-t border-slate-100 text-center">
+            <!-- <div class="mt-6 pt-4 border-t border-slate-100 text-center">
                 <p class="text-xs text-slate-400 mb-2 uppercase font-semibold">Quick Demo Login Shortcuts</p>
                 <div class="flex gap-2 justify-center">
                     <button onclick="quickLogin('katete_cashier')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-3 py-1.5 rounded-md transition">
@@ -271,6 +271,10 @@
                                     <option value="Chipata Branch">Chipata Branch</option>
                                 </select>
                             </div>
+                            <!-- CSV Export Button -->
+                            <button onclick="exportDailyReportCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition flex items-center gap-2 mt-4 sm:mt-0 shadow-sm">
+                                <span>📥</span> Export Report to CSV
+                            </button>
 
                             <button onclick="printSection('daily-report-print-area')" class="bg-slate-900 hover:bg-slate-800 text-white font-medium px-4 py-2 rounded-lg text-sm transition flex items-center gap-2 mt-4 sm:mt-0">
                                 <span>🖨️</span> Print Daily Report
@@ -887,6 +891,49 @@
             document.getElementById('daily-report-total').textContent = `ZMW ${total.toFixed(2)}`;
             document.getElementById('daily-report-total-card').textContent = `ZMW ${total.toFixed(2)}`;
         }
+        // CSV Export Functionality
+        function exportDailyReportCSV() {
+            const today = new Date().toISOString().split('T')[0];
+            const selectedLocation = document.getElementById('report-location-filter').value;
+            const filteredSales = salesHistory.filter(s => selectedLocation === 'All' || s.location === selectedLocation);
+
+            if (filteredSales.length === 0) {
+                alert(`No sales data available to export for ${selectedLocation}.`);
+                return;
+            }
+
+            // CSV Header Row
+            const headers = ["Location", "Barcode", "Batch Code", "Product Name", "Quantity", "Unit Price (ZMW)", "Payment Method", "Total (ZMW)", "Date"];
+            
+            // Format Sales Data into CSV Rows
+            const rows = filteredSales.map(item => [
+                `"${item.location.replace(/"/g, '""')}"`,
+                `"${item.barcode}"`,
+                `"${item.batchCode}"`,
+                `"${item.name.replace(/"/g, '""')}"`,
+                item.qty,
+                item.price ? item.price.toFixed(2) : (item.total / item.qty).toFixed(2),
+                `"${item.method.replace(/"/g, '""')}"`,
+                item.total.toFixed(2),
+                `"${item.date || today}"`
+            ]);
+
+            // Combine Header and Rows
+            const csvContent = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+
+            // Create Download Link & Trigger Download
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            const sanitizedLocation = selectedLocation.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Daily_Sales_Report_${sanitizedLocation}_${today}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
 
         // Analytics with Independent Branch Filtering (ADMIN ONLY)
         function renderAnalytics() {
@@ -1013,6 +1060,20 @@
         }
 
         function printSection(id) { window.print(); }
+
+        // Local indexDB 
+        const db = new Dexie('careclass_db');
+        db.version(1).stores({
+            users: '++id, username, role, location, status',
+            inventory: '++id, barcode, batchCode, name, price, stock',
+            sales: '++id, barcode, batchCode, name, qty, price, total, method, location, date'
+        });
+
+        //POS CheckOut (Save Locally first)
+        async function recordSaleOffline(saleItem) {
+            await db.salesQueue.add(saleItem);
+
+        }
     </script>
 </body>
 </html>
