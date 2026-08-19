@@ -37,7 +37,7 @@
                         <option value="Lusaka">Lusaka</option>
                         <option value="Katete Branch">Katete Branch</option>
                         <option value="Chadiza Branch">Chadiza Branch</option>
-                        <option value="Kitwe Branch">Kitwe Branch</option>
+                        <option value="Petauke Branch">Petauke Branch</option>
                         <option value="Chipata Branch">Chipata Branch</option>
                     </select>
                 </div>
@@ -57,7 +57,7 @@
                 </button>
             </form>
 
-            <div class="mt-6 pt-4 border-t border-slate-100 text-center">
+             <!-- <div class="mt-6 pt-4 border-t border-slate-100 text-center">
                 <p class="text-xs text-slate-400 mb-2 uppercase font-semibold">Quick Demo Login Shortcuts</p>
                 <div class="flex gap-2 justify-center">
                     <button onclick="quickLogin('katete_cashier')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-3 py-1.5 rounded-md transition">
@@ -67,7 +67,7 @@
                         🛡️ Admin Demo
                     </button>
                 </div>
-            </div>
+            </div> -->
         </div>
     </div>
 
@@ -267,7 +267,7 @@
                                     <option value="Lusaka">Lusaka</option>
                                     <option value="Katete Branch">Katete Branch</option>
                                     <option value="Chadiza Branch">Chadiza Branch</option>
-                                    <option value="Kitwe Branch">Kitwe Branch</option>
+                                    <option value="Petauke Branch">Petauke Branch</option>
                                     <option value="Chipata Branch">Chipata Branch</option>
                                 </select>
                             </div>
@@ -334,7 +334,7 @@
                                     <option value="Lusaka">Lusaka</option>
                                     <option value="Katete Branch">Katete Branch</option>
                                     <option value="Chadiza Branch">Chadiza Branch</option>
-                                    <option value="Kitwe Branch">Kitwe Branch</option>
+                                    <option value="Petauke Branch">Petauke Branch</option>
                                     <option value="Chipata Branch">Chipata Branch</option>
                                 </select>
                             </div>
@@ -400,7 +400,7 @@
                                 <option value="Lusaka">Lusaka</option>
                                 <option value="Katete Branch">Katete Branch</option>
                                 <option value="Chadiza Branch">Chadiza Branch</option>
-                                <option value="Kitwe Branch">Kitwe Branch</option>
+                                <option value="Petauke Branch">Petauke Branch</option>
                                 <option value="Chipata Branch">Chipata Branch</option>
                             </select>
                         </div>
@@ -524,7 +524,7 @@
             }
 
             if (user.status === 'Suspended') {
-                errorDiv.textContent = "Account suspended! Please contact the administrator.";
+                errorDiv.textContent = "This Account is suspended Please contact your administrator for Assistance.";
                 errorDiv.classList.remove('hidden');
                 return;
             }
@@ -534,15 +534,15 @@
             applyUserPermissions();
         }
 
-        function quickLogin(username) {
-            const user = users.find(u => u.username === username);
-            if (user) {
-                document.getElementById('login-username').value = user.username;
-                document.getElementById('login-password').value = user.password;
-                document.getElementById('login-location').value = user.location || 'Lusaka';
-                document.getElementById('login-form').dispatchEvent(new Event('submit'));
-            }
-        }
+         function quickLogin(username) {
+             const user = users.find(u => u.username === username);
+             if (user) {
+                 document.getElementById('login-username').value = user.username;
+                 document.getElementById('login-password').value = user.password;
+                 document.getElementById('login-location').value = user.location || 'Lusaka';
+                 document.getElementById('login-form').dispatchEvent(new Event('submit'));
+             }
+         }
 
         function handleLogout() {
             currentUser = null;
