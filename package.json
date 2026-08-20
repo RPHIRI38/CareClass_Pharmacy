@@ -1,0 +1,14 @@
+{
+  "name": "care-class-pharmacy",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@netlify/database": "^1.1.0",
+    "drizzle-orm": "^1.0.0-beta.22"
+  },
+  "devDependencies": {
+    "@netlify/functions": "^5.3.0",
+    "drizzle-kit": "^1.0.0-beta.22"
+  }
+}
